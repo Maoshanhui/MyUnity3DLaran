@@ -1,0 +1,5409 @@
+工作日志
+
+2017.8.14
+
+入职，加入灵体战记项目组
+
+看代码规范---
+
+看工程结构说明---
+
+看lua教程
+1-6章---
+
+print(10 .. 20)
+
+
+
+Lua  
+
+NGUI 框架
+
+SK 框架
+
+--------
+
+2017.8.15
+
+看Lua教程
+7-16章-
+
+
+
+print(b)
+
+--------
+
+2017.8.16
+
+今天带来了自己的键盘，手感都有点不一样了，哈
+
+好不容易有了自己的SVN账号，然后花了好久时间才在VP那边弄好，才能用
+
+也因为 Unity 2017 和 win10 的原因，拿到了本机的管理员权限
+
+-----
+SVN账号：
+	maoshanhui
+密码：
+	mao@2015
+----
+
+拉项目下来---
+
+
+---------
+
+2017.8.17
+
+今天项目可以跑了---
+
+VS 遇到了问题，真是很累，估计是Lua插件和用户什么的，没弄好，修复了一次，重装了两次，没用。只好暂时先用 Mono---
+
+看代码，梳理一下项目工程的结构---
+
+-----------
+
+2017.8.18
+
+今天找了一下主程，梳理了一下游戏的项目结构，代码结构---
+
+下面是要看的代码范围：
+
+SKStart.cs ---
+
+ugui
+
+core 
+
+event
+
+module
+
+tools
+
+playerData
+
+------------
+
+2017.8.19 
+
+今天继续看代码，把功能记在了小本本上---
+
+
+---------
+
+2017.8.21
+
+今天已经开始接活儿了，两个页面要写：
+
+(New-0)《X》要塞资源站功能规则Ver.1.5.1
+- 胡建 说：这个功能界面可以从shop界面中复制。
+
+
+(New-0)《X》查看其他玩家个人信息功能Ver.1.5.1  
+- 杨陈 说：这个功能界面可以从bag bagStatus中复制
+
+-----------
+
+14:05 update 了整个项目---
+
+3rdPlugins 那个重新设置，需要用管理员身份运行:  Assets/创建对美术工程第三方脚本的文件夹引用.bat
+
+两个项目都需要：
+SK框架->美术工具->重设项目资源文件夹->  E:/project/project/client/trunk/clientData  
+
+-----------
+
+Reschange 页面（资源站）：
+
+记录下步骤：
+
+1.美术项目里先拼一下页面--- 只拼了一个 topSelectBanner 
+
+2.手动写一个对应的 xml ?
+
+3.找一下同级UI的入口，然后复制一个入口的按钮，作为启动入口
+
+4.模仿着写一下入口的代码，启动页面。
+
+5.
+
+------------
+开启商店页面（资源站的内容参考页面）的代码如下：
+
+ 入口位于 uiFortCommon:
+
+function UIFortCommon:checkOpen()
+    
+    --商店
+    local temp = _playerData.checkFeatureActive(21001);
+    SKUITransform.SetActive(self.UI_ID,ui.shopNode,temp);
+
+------------
+
+2017.8.22
+
+---
+data_UI.lua
+gameUI.lua
+
+这两个里面新增一个 125 Fort_ResChange
+---
+
+拼 window_fort_res_change 的界面（先拼一个toggle） ---
+
+打包：在美术资源里，Assets->单独打包->UGUI --- 查看了一下临时文件，E:\project\project\client\trunk\clientData\Assets\win\Temp 里面有这个页面，嗯不错。
+
+---
+
+入口在配了  
+
+data_fort_land.lua 中
+
+--资源站
+[14] = {land_Id = 14,area=1,size=3,  pos = {0,0},         unlock_conds = {},buildingtype=17  ,scenePos =  "Object/pos",name_pos=90,selected_params={0.6,108},campos= "Object010/campos",fogDis = {10,70}},
+
+
+data_fort_building.lua 中
+[11501] ={id =11501,building_type=17,name="资源站",desc = "",function_desc="解锁资源站\n",icon = "build_icon_05",group =17, area =1,size =3,lv =1,unlock_conds ={fort_level=1},build_materials = {{101001,150},{41001,15000}},build_time = 20,stop_recover = {{101001,50},{41001,5000}},could_destroy =0, destroy_recover ={},next_level_id =0,building_effects = {11401},scale=1.2, }
+
+
+
+之后，已经可以显示于 建设(fort_build) 页面
+
+-----
+现在需要一个解锁页面：
+
+-显示需要消耗的物品，需要的条件
+
+-解锁后弹出界面
+--------
+
+服务器配过表以后，能解锁了，现在就需要我来写页面代码了
+
+-----------------
+
+2017.8.23
+
+研究商店的代码
+
+local eventlistener = sk_eventManager.addListener(_EventType.Event_Shop_List, " ", self.initShop, self);
+    table.insert(self.mListenerList, eventlistener);
+
+-首先用 table.insert 方法，给 mListenerList 插入每个 eventlistener... 
+
+
+
+    [101] = { id = 101, name = "矿石兑换", des = "", },
+    [201] = { id = 201, name = "水晶兑换", des = "", },
+    [301] = { id = 301, name = "布料兑换", des = "", },
+    [401] = { id = 401, name = "毛料兑换", des = "", },
+
+流程大概是在awake 中注册监听，然后向服务器发送数据请求，请求商店所有的数据。---
+然后服务器向客户端发送数据，拿到数据之后，启动 _playerData.shop_onSeverShopData(data);
+
+解析商店列表数据，然后排序，再通知刚才的监听，init 商店列表。   c.awake()->s->c.init()  
+
+
+-------
+
+
+-需要单独请求四个商店，然后得到商店列表。
+
+
+-按照玩家自己的已有建筑，得到商店列表的一个顺序
+
+-----------
+
+2017.8.24
+
+1.拿数据，简单来说，通过事件和callback ，拿到单个商店的数据，然后收集起来，放在本地 lua 的一个表里，
+
+2.然后用数据初始化UI
+
+---
+
+playerData 里面收到服务器商店列表数据之后：
+
+-根据id查到本地的名字和描述，然后插到 _playerData.mShopList 里面
+
+-根据id排序 _playerData.mShopList
+
+-停止 _playerData.mCorouteList 内的所有 coroutine ，然后销毁。 这些 coroutine 都是用来倒计时，算刷新时间的
+
+今天已经能够显示页面的数据了： 兑换页面的名字
+
+----------------
+
+2017.8.25
+
+1.实现 toggle ，选择兑换页面---
+
+2.用美术资源拼页面
+
+3.构思好全部页面和交互，然后再写代码
+
+SetGrayVC      	图标变灰
+
+SetSpriteIndex	ImageSwitcher 里面的函数，换图片用的。 
+
+
+物品显示的时候需要一个品质框：蓝 绿 紫 橙 那些。
+
+商城里面有：每周限购->轻皮 重皮 这些。
+
+------------------
+
+2017.8.26
+
+1.看一下商城的品质框实现
+
+gameData.getGoodsData(id).itemType
+
+
+由于扩展性不好，所以品质框不用ImageSwitcher实现，比如说，以后加个暗金装备，每一个用到的都需要再加。就很麻烦
+
+
+SKUIImage.SetSpriteName(self.UI_ID, cell.icon, item:getIcon(), _e_itemType_atlas[item:getType()]);
+
+
+            SKUIImageSwitcher.SetSpriteIndex(self.UI_ID, cell.quality, item:getQuality());
+            SKUIImageSwitcher.SetSpriteEnable(self.UI_ID, cell.quality, true);
+            SKUIImage.SetSpriteName(self.UI_ID, cell.icon, item:getIcon(), _e_itemType_atlas[item:getType()]);  
+
+2.继续拼页面，差不多完成了---
+
+3.检查所有 UI 的 Raycast Target ，Anchor ---
+
+
+4.先写右上角，获取物品图标，数量
+-写对应的xml
+
+-----------------------
+
+2017.8.28
+
+1.接着上次写的，右上角的xml ---
+
+ 沃日，傻逼了，有一个 good (1) 的list，改了第一个，剩下几个没改，一点 自动设置UI挂件ID，就报错。在毛力立的帮助下才发现的。。。累了---
+
+2.整个页面的其他xml ---
+
+3.关闭按钮---
+
+4.显示右上角的图标和数字
+
+ 思路上这样：	lua 内写死一个配置表， 资源站有固定的几个兑换： 40 41 42 43 ---
+	
+	然后查到每个店铺需要的材料，显示出来。
+
+	没错，这个不能写死，一定要从服务器获取（至少我是这么认为的， 万一以后要变呢，所以才有那么多配置表）
+
+		
+SKUIImage.SetSpriteName(self.UI_ID, cell.icon, item:getIcon(), _e_itemType_atlas[item:getType()]);
+
+
+
+5.显示每个兑换页面的 good 
+
+----------------
+
+
+2017.8.29 
+
+继续昨天的工作：
+
+1.显示右上角的图标和数字
+
+ -从服务器获取商店数据，查到每个店铺需要的材料数据：直接查每个店铺的所有销售商品，然后查到 消耗id ，分类。---
+
+-----
+if v.cost_id ~= nil and table.exist( costIdList, v.cost_id) == false then 
+                table.insert(costIdList,v.cost_id);
+               end
+
+
+table.exist( costIdList, v.cost_id) 这个函数是 毛力立 自己写的判重函数，有点棒
+
+
+function table.exist(table, value)
+    if table == nil or type(table) ~= "table" then
+        return false;
+    end
+    for _,v in pairs(table) do
+        if v == value then
+            return true;
+        end
+    end
+    return false;
+end
+
+-----
+
+
+ -显示图标
+
+  不知道为啥，其他的货币都写在了 gameCommon.lua 里面。可能比较特殊。我仔细看了一下，我用到的应该就是普通道具而已。暂时不写在这里面了。代码先放这里
+--------------
+    --矿石
+    _oreTypeID = 11016,
+    --水晶
+    _crystalTypeID = 11019,
+    --布料
+    _clothTypeID = 11013,
+    --毛料
+    _woolTypeID = 11022,
+
+-------------
+
+ -显示文字---
+-------
+
+刚才又傻逼了，图标死活一点改变都没有。然后发现 先前的 sprite 和 之后设置的 sprite 完全是乱的。毛力立又一次帮了我，发现乱了以后，然后看见 美术资源 prefab 在场景里是白色，
+估计是早上的崩溃造成了什么问题。然后重新拖出来 prefab，重新设置UI id，然后打包，就好了---
+
+
+---------
+
+2. 所有商品的数据，goods---
+
+18:15:18.243-115: 没有找到商品 : 31003
+stack traceback:
+	[string "game/core/gameTools"]:402: in function 'errorLog'
+	[string "game/core/gameData"]:1187: in function 'getSell'
+	[string "game/playerData/playerData_shop"]:246: in function 'initSellOne'
+	[string "game/ui/ugui/uiFortResChange"]:220: in function 'initSellList'
+	[string "game/ui/ugui/uiFortResChange"]:206: in function <[string "game/ui/ugui/uiFortResChange"]:199>
+	[C]: in function 'SetIsOn'
+	[string "game/ui/ugui/uiFortResChange"]:194: in function 'func'
+	[string "framework/manager/sk_eventManager"]:160: in function 'postEvent'
+	[string "game/ui/ugui/uiFortResChange"]:147: in function 'func'
+	[string "framework/manager/sk_eventManager"]:160: in function 'postEvent'
+	[string "game/messageCall/107shop/sc_shop_shop_info_msgCall"]:10: in function 'call'
+	[string "game/module/client"]:57: in function <[string "game/module/client"]:46>
+UnityEngine.Debug:LogError(Object)
+LuaInterface.Debugger:LogError(String)
+LuaInterface_DebuggerWrap:LogError(IntPtr) (at Assets/Source/Generate/LuaInterface_DebuggerWrap.cs:152)
+LuaInterface.LuaDLL:lua_pcall(IntPtr, Int32, Int32, Int32)
+LuaInterface.LuaState:PCall(Int32, Int32)
+LuaInterface.LuaFunction:PCall()
+SKFramework.SKUI:ToggleCellCall(ToggleCell) (at Assets/3rdPlugins/Scripts/UI/SKUI.cs:428)
+UnityEngine.UI.Toggle:set_isOn(Boolean)
+SKFramework.SKUIToggle:SetIsOn(Int32, Int32, Boolean) (at Assets/3rdPlugins/Scripts/UI/Quick/SKUIToggle.cs:27)
+SKFramework_SKUIToggleWrap:SetIsOn(IntPtr) (at Assets/Source/Generate/SKFramework_SKUIToggleWrap.cs:46)
+LuaInterface.LuaDLL:lua_pcall(IntPtr, Int32, Int32, Int32)
+LuaInterface.LuaState:PCall(Int32, Int32)
+LuaInterface.LuaFunction:PCall()
+SKFramework.SKNetwork:onUpdate(Single, Single)
+SKFramework.SKObject:sUpdate(Single, Single)
+SKFramework.SKApp:gameUpdate()
+SKStart:Update() (at Assets/SKStart.cs:52)
+
+
+仔细跟了一下，直接找这段代码 没有找到商品，猜测可能是服务器的锅。然而不是。发现是策划少配了一个表---
+
+
+今天遇到好多函数调用的问题，self:XXX() 这个是函数调用。记住。
+
+还有这种 local costIdList = {}; table 初始化前先赋值。
+
+-----
+
+
+
+ch_npc_tj_p  铁匠模型名字。。。
+
+---------------
+
+2017.8.30
+
+兑换界面每个商品的显示 
+
+兑换次数:X/5---
+
+兑换界面消耗物品的显示---
+
+    <Image name ="quait" path ="goodNode/goodScrollRect/pool/good ({0})/item/quait" />
+    <Image name ="Icon" path ="goodNode/goodScrollRect/pool/good ({0})/item/Icon"/>
+    <Text name ="itemCountText" path ="goodNode/goodScrollRect/pool/good ({0})/item/itemCountText"/>
+    <Image name ="sellOutImage" path="goodNode/goodScrollRect/pool/good ({0})/item/sellOutImage"/>
+
+
+-------------------------
+
+2017.8.31
+
+昨天算比较顺利。兑换到的物品，消耗物品都显示正确了。思路也理清了，直接沿用 playerData.shop 里面的处理 mShopList的函数就可以。
+
+需要
+
+商店数据刷新的逻辑--
+
+-------------
+
+2017.9.1
+
+按钮交互性，raycast target---
+
+继续写刷新逻辑-
+  
+	-不自动刷新---
+  	
+	-每周自动刷新---
+  	
+	-每天自动刷新---
+	
+	-间隔刷新---
+
+-手动刷新--- 
+
+兑换的逻辑--
+
+消耗的物品数量，右上角 UI 更新
+
+31018 应该消耗的是水晶，因为在水晶里面有这个sell，表有错误，已经找周浩然了--
+
+-------------
+
+2017.9.2
+
+成功购买的消息：兑换物品回复--
+-点击兑换按钮的时候，mSelectGoodData = 点击的商品 
+
+-兑换成功后，兑换次数减少---
+
+-兑换成功后，更新右上角材料物品显示---
+
+-------- 第一个功能逻辑上基本全部结束---
+
+
+---------------
+
+2017.9.4
+
+TODO 
+
+1.只需要再加一个人物 模型即可，用铁匠。---
+ 
+2.然后面板的一些图片，可能用的不对，记得找唐凯，问一下有没有问题，图片是否对应--
+
+- 答案是字的颜色，好多其他的东西确实不对应。 晚上捋一下
+
+Toggle 选中后，字体颜色变成 234 167 50 
+
+物品卖完，字体颜色变成 221 38 8 ，面板图片替换成 color_black ， 65% alpha 
+
+
+
+
+
+
+--------
+
+查看其他玩家属性：查看其他玩家个人信息功能Ver.1.5.1
+
+window_bag  里面有玩家模型，名字，等级，战斗力
+
+window_bag_status  右侧其他所有属性
+- 面板直接
+
+PlayerData_team
+team
+teamMember
+
+uiMyTeam
+
+self.mMyTeam.memberCache[i].
+
+------------
+
+2017.9.5
+
+搞了一上午第一个页面的 字体颜色，按钮颜色，是否显示 等等。---
+
+修复了一个 SubUI 的bug---
+
+金币显示的 误导bug ---
+
+--------
+第二个页面的目标：
+
+1.打包EXE，双开，组队成功。 
+ -正确的打包步骤：SK框架，拷贝资源，然后再打Windows包
+ -然而我没有远程机的权限，所以只能喊 汤可心 帮我打包，然后发给我。这。。。很蠢（没关系，目前打算多弄几次，然后他就烦了，给我一个密码，嗯。。。）
+ -好吧，其实可以在本地写功能，然后其他的多开客户端只是起到连接作用。然后在本地 Debug
+
+2.调用接口，然后显示 debug 信息 ---
+
+
+3.xml注册另一个ui窗口，基本接近window_bag，需要去掉时装功能，背包功能。
+ -然后这个窗口负责显示队友的模型，装备，名字，等级等。
+ 
+ -这个窗口上面叠加一个子窗口，window_bag_status ，，然后传的数据全是查看的队友的信息，由服务器发过来
+
+ -入口，uiMyTeam 里面的 Detail 函数	
+
+4.突然想起来主程给我第一次讲项目的时候，就说可以反编译，都看的到的，SK 框架的源码。细思极恐，主程还是相当厉害的。。。
+
+
+---------------------------------
+
+2017.9.6
+
+今天需要写 弹窗，
+1.先把 uiTeamDetail 显示出来---
+
+-注册一个页面，需要去 gameUI 里面注册一个id 
+-data_UI 里面写一下文件相关的路径
+
+sk_uiManager.openSubUI(gameUI.Team_MyTeam, gameUI.Team_Detail, 1);
+
+
+ -Clojure 这个和 Scala 都是 Java 语言相关的，运行在 JVM 上的语言，比较神奇，Erlang 是我们现有的服务器，并发好像还不错，页游很多用到---（工作前看了一眼知乎，后端其实还是蛮神奇的）
+
+ -window_bag_role 这个是用来显示玩家当前装备栏的，同时还显示背包。那么查看其他玩家的时候，不显示背包，只显示其他玩家的装备栏即可。 
+
+ -window_bag_status 现在看来是要叠加两个子窗口啦，应该可以用 subUI
+
+2.今天的任务就是整合这三个UI，数据全部为空，显示出来
+
+gameUI.Bag_State
+
+gameUI.Bag_Role
+
+3.在做上一个界面的时候，也大概想到了，每个带框的道具都要能点击，然后显示 tips，这个先提一个bug，然后做好了装备这个再做那个---
+
+4. 数据流，目前认为可以这样：
+   -uiMyTeam 里面 Detail(index)  index -> role_id -> 向服务器发送请求：
+	-   _playerData.roleinfo_getRoleView(roleId,view_type) 其中，view_type = 2 ,这样才能看到详细的属性信息
+	-   然后监听刚才那个请求，然后得到数据，用数据去初始化
+   
+   -目前最难的是从 index 找到 role_id，我之前粗读了一下 uiMyTeam 里面的代码，应该是存了的--- 果然是存了的
+	
+   -试一下发请求，拿到数据		
+
+5. 问了一下汤可心，想把自己的页面全部做成 SubUI，但是开销可能会有点大，不过全屏的UI可以设置 data_UI 里面的字段 _uiType = 1，这个是全屏的UI。
+   会关闭背后不显示的UI，我试试先。
+   -然而改了以后也不行。所以第一个页面就别用 SubUI 了。改换成之前 FortResChange 页面的打开方式，直接Open---
+
+--------------
+2017.9.7
+
+1.能够拿到服务器数据，显示队友名字和等级，战斗力 ---
+
+2.显示队友各种属性信息，需要传参数到 gameUI.Bag_State ，然后初始化，然后显示---
+
+3.显示队友模型，就在 Team_Detail 里面拿到模型数据，然后显示。
+后来仔细想了一下，我直接把原先第一个页面改一下，去掉一些东西的显示，就OK了---
+
+模型加载：
+-先加载职业模型。
+-散件根据id， 一个一个set，然后更新
+
+uiMyTeam 也是汤可心写的，明天问一下，怎么根据参数加载模型
+
+--------------
+
+2017.9.8
+
+今天上午没问汤可心，直接把角色数据拿过来了，里面有职业和showInfo ，mem.mProfessionType, mem.mShowInfo, 然后就可以用同样的函数加载模型，就OK了。---
+
+现在只差最后一个了，BagRole ，传装备参数进去，然后显示。
+
+不显示背包部分---
+
+----------
+
+2017.9.9
+
+来早了有一个烦恼，那就是，服务器大哥还没来。这没法继续下去。等他来了再说
+
+---------
+local ui = sk_uiManager.open(gameUI.ItemTips);
+        ui:showItemTips(item, true);
+
+调别的窗口的方法，可以这么写
+---------
+
+2017.9.11
+
+今天把代码移到了自己的代码里，自己的页面有自己的各种UI，而不是用背包UI。---
+
+两个 bug，
+
+1.装备的共鸣 
+
+2.装备的显示顺序   ---  按照 pos  映射到 _equipSlotMap 上，就可以了.
+
+-----------
+
+2017.9.12
+
+装备的共鸣--- 发现UI层级不对，而不是数据不对。。。---
+
+发现需求在文档里写的很是简单，但其实很多窗口有小的 tips 弹窗一类，都需要处理 ---
+
+资源站里的可兑换道具，显示道具 tips --- CItem 真的是有点烦人。。。各种类互相倒来倒去
+
+看了一下3D数学基础，不知道为啥杨陈今天不在，所以做完了暂时不知道干嘛。先看看书好了---
+
+------------------
+2017.9.13  
+
+昨天说了一天开会，一直没开成。昨天下午和晚上看书也比较困---
+
+上午改了一下bug，自己的有点bug，是因为模型对应的数据没有及时 Destroy ，所以需要多注意 ---
+
+下午帮李庆搞了一个小的 UI 的小功能，代码都没写，就搞定了，只是加了个 GridLayoutGroup ，用来合并不显示的按钮，这样中间不会出现空缺---
+
+---------------------
+
+2017.9.14
+
+今天一直在搞铁匠铺，天赋过滤很头大
+
+    local puton = item:getPutonType();
+    local professionLimitData = gameData.getProfessionLimit(puton);
+    if professionLimitData ~= nil then
+        -- 职业匹配
+        local bFind = false;
+        local professionLimitTab = professionLimitData.professionsLimit;
+        for i = 1, #professionLimitTab do
+            if talent == professionLimitTab[i] then
+                bFind = true;
+            end
+        end
+
+
+and (needTalent == 0 or scheme.productData.puton_type == needTalent)
+
+-----------------
+
+2017.9.15
+
+天赋过滤OK---
+
+
+虽然对shader 没有要求，但是还是想捡起来
+
+SubShader
+{
+	[Tags] // 可选标签
+
+	Tags{ "Queue" = "Transparent"} 
+	Tags{"RenderType"="Opaque"}
+	
+	
+	[RenderSetup] // 可选的状态
+
+	Pass{
+
+		[Tags]
+		[RenderSetup] // 也可以写在 pass 里面
+
+	}
+
+	// Other Passes 
+}
+
+------------------
+
+2017.9.16
+
+GrabPass 可以抓取屏幕并将结果存储在一张纹理中，以用于后续的 Pass 处理
+
+Shader "MyShader"
+{
+	Properties
+	{
+	}
+	
+	SubShader
+	{
+		// Surface Shader 或者                               --- 是 Vertex / Fragment shader 的更高一层的抽象：之后还是会被转化成一个包含多个 Pass 的顶点/片元着色器
+		// Vertex / Fragment Shader 或者
+		// 固定函数着色器 Fixed Function Shader	  --- 弃用
+	}
+}
+
+Unity 的 shader 也是高度封装的， 比如  曲面细分着色器 Tessellation Shader ， 几何着色器 Geometry Shader 就支持的差一点。（话说以前也没听过这些着色器。看起来是不同的阶段的着色器）
+
+---------------
+
+2017.9.18
+
+1.今天需要先写铁匠铺里面，预览属性里面的 珍贵属性，然后查表对一下数据，验证正确性---
+
+2.计算随机获得其中几条的 下限 ，上限---	
+
+3.抽烟的烟头火星的位置---
+
+4.打铁锤子打完之后锤子会飞走。直接消失的效果都比飞走好。所以直接让锤子消失---
+
+GameObject.Find("tiejiang_futou001").SetActive(false)
+
+这一块儿遇到一个大坑。。。
+
+首先是在 Coroutine 里面 Find 物品，然后 Deactive 的顺序，有点烦人，然后第二点是， 划重点！！！
+Inactive 的物体，Find 是找不到的，这就很恶心了。需要事先保存一下。。。
+
+
+------------
+
+2017.9.19
+
+今天主动接了李庆的活儿，毕竟是舰长。
+
+1.搞一下目前采集舰的 收集按钮的bug--- 是button 的 dataIndex 设置的不对--- 
+
+2.领取完采集的东西之后，还可以继续领。这时候出来的秋刀鱼，默认的UI应该是。逻辑上需要调整--- 然而debug了半天，发现是服务器的报错没处理，
+可以收到东西，但是没收到对应的回调，所以没有正常领取结束。服务器搞定了就搞定了---
+
+3.采集完成后，显示的数量和实际领取的数量对不上---也是服务器问题。---
+
+4.修复后，引入了新的显示问题，会显示两遍
+
+5.开采中的进度条在外面也显示
+
+
+
+20807 ： 919 98
+
+20815 ：  2125 105
+
+
+
+
+大礼包
+
+
+要塞显示功能开启
+
+--------------------
+
+
+2017.9.20
+
+1.继续修复显示两遍的问题---
+
+
+91 布料 
+91 绿水晶
+104 绿水晶
+
+
+
+
+--
+-- 收取后得到返回结果
+function UIFortRes:onCollectResource(rewardList)
+    if self.mIsQuickGet then
+        self:closeUI();
+        return;
+    end
+
+    SKLog.Log("collectResource 2  ????????????");
+
+--    if #rewardList > 0 then
+--        self:showRewardList(rewardList[1].item_list);
+----        gameTools.labelMessage("领取成功");
+--    end
+
+    -- 重新刷新建筑信息
+    cs_fort_resource_info(self.mBuildingId):send();
+
+end
+
+注释掉中间几句，就OK了
+
+--
+
+2.开采中的进度条在外面也显示
+
+我的思路是：uiFortBuild 是父节点UI，uiFortRes 是SubUI ，然后 awake 里面把父节点传进来，
+然后调用父节点的方法，设置进度条数据。开启一个倒计时 
+
+
+areaInfo.id 这里大概错了，明天继续看
+
+
+
+
+-------------
+
+2017.9.21
+
+11001 10   120
+
+10901 11   120
+
+今天终于把进度条显示出来了，而且没有任何问题了。比较麻烦，是 CoTimer 的垃圾回收问题。
+切换页面的时候，初始化的时候，分别要销毁和创建新的。很容易删不干净，引起bug ---
+
+ui无法找到。 是在打开采集的次级页面之后，返回角色面报错---
+
+要塞显示功能开启---
+
+---
+装备强化
+装备开封
+灵体系统
+灵体分解
+技能（主界面）
+灵体（主界面）
+背包（主界面）
+强化（主界面）
+---
+-------------------
+
+2017.9.22
+
+今天开始搞红点
+
+有两种搞法
+1.单机游戏可以做一个总的 MessageManager ，作为单例，一直运行，然后检查数值变化，推送数值变化的通知。
+红点监听数值变化的事件，然后满足条件，红点出现。
+
+2.网络游戏，比如目前的项目，就可以直接监听服务器发来的数值变化消息，原理同上。
+
+
+---
+
+1.修建界面的红点 window_fort_build_info
+
+直接根据是否可以升级，建筑来确定红点。原先以为可以跟着修建按钮的逻辑。但是发现修建按钮条件不足的时候也显示。
+所以还是自己写一个判断条件的消息处理---
+
+
+SKUITransform.SetActive(self.UI_ID, ui.notice, true);
+
+2. 母舰 有可兑换的次数时，显示红点提示--- 外面的做了，里面的没做，之后再说
+
+3. 狩猎中心 有可领取的任务时，显示红点标识--- 同上
+
+---------------------
+
+2017.9.25
+
+
+4.   Event_Role_update_point  也需要监听，才能检测到金币的变化？这里有点奇怪。。。    ---
+
+
+5.   最外面，舰队按钮的红点。这个最难做，相当于自底向上所有之前做过的红点全部数据都需要检查监听，感觉思路不太对。
+    然而还是得这么做，把所有在 fort_build 里面用过的数据拿出来，在fort页面显示红点---
+
+
+
+Event_Fort_Exchange
+Event_Soul_task_commit
+Event_Soul_task_finish
+
+
+
+556
+
+今天提交上去的红点居然引发了bug，不过还好，界面没有完全崩掉。。。只是显示有点问题。
+
+然后是触发的条件有点问题，删掉了其中一个，就OK了---
+
+
+10801 10401 1 120
+
+
+
+
+
+
+
+-----------------
+
+2017.9.26
+
+昨天采集的bug,选项不同，其实消耗的阅历相同，奖励也相同，原来只是测试数据的问题。必须要通过消耗时间的不同来区分。
+讲道理其实可以再加个index的参数，但是军哥应该是不想改自己的设计。所以沟通下，改改测试数据就好。---
+
+李庆那边告诉了我的一些代码上的错误，比如通知的 tag ，不过他已经改了提交了---
+
+
+舰队每一个战舰的名字和底板。昨天周浩然告诉我要改。今天就有测试在群里说了，真是快。我现在改
+
+
+
+采集的，后来军哥采取了不同的方案，直接发index，就不需要发时间了。---
+
+发现自己容易思维定势，比如这个的解决方案，明明可以不加参数，修改一个参数就可以。当然也可能是对服务器不了解，以为必须发时间过去。
+
+
+下午继续改舰队名字和底板--- 
+
+红点系统虽然烦人，但是确实有用。当然需要自顶向下，先把所有数据都拿到，确定每个红点的显示。目前还在讨论方案。我做的红点只是很小一部分---
+
+
+红点系统可能有一点点小bug，等提了再说---
+
+-----------------
+
+2017.9.27
+
+物品获取调整为配置形式：等待
+
+今天看一下背包的代码，想了一下之前做的单机的背包，遇到过不少麻烦，还有背包和仓库的逻辑。
+仔细想想应该还是划分和设计的不够清楚，所以写了很久。
+
+
+local function _sort_Items(item, newItem)
+    if newItem:getType() == 3 then
+        if item:getType() < 3 then
+            return true;
+        else
+            if newItem:getQuality() > item:getQuality() then
+                return true;
+            elseif newItem:getQuality() == item:getQuality() then
+                if newItem:getSeat() < item:getSeat() then
+                    return true;
+                elseif newItem:getSeat() == item:getSeat() then
+                    if newItem:getLevel() > item:getLevel() then
+                        return true;
+                    elseif newItem:getLevel() == item:getLevel() then
+                        if newItem:getId() > item:getId() then
+                            return true;
+                        end
+                    end
+                end
+            end
+            return false;
+        end
+
+节选了一段物品在背包里排序的函数。我觉得扩展性和写法都不咋样。可以把背包的属性写成一个列表，
+排序优先级从大到小，这样里面的属性怎么变都行，也可以随便增加,也不用写这么丑
+
+属性index  1    2    3 ... n
+属性value  v1  v2   v3 ... vn
+排序优先级 n  n-1  n-2 ... 1 
+
+可以按这个优先级计算一个和
+
+sum = v1 * n + v2 * (n-1) + v3 * (n-2) + ... vn * 1 
+
+然后去比较这两个物品的 sum
+
+看了下别人的 Log，想起来最近提交都没有写 Message，习惯有点不太好，下次代码提交还是写上
+
+
+lua 里的 table.insert 实现了背包列表，按顺序插入
+
+玩家有个 UID ,  
+    -- UID列表
+    _Item_UID_Map_[item:getUid()] = item;
+
+显示背包列表 _Item_List_
+
+隐藏背包列表 _Hidden_Item_List_
+
+这两个对应的列表
+
+wrap 包裹,包装
+
+
+--------------------
+
+2017.9.28
+
+今天解决了昨天下班前的红点系统的bug，还是加了一个新的 event ---
+
+要写这个跳转的功能:
+
+获取序号 对应系统      物品id 是否跳转 跳转文本          跳转至界面
+    1      Fort_Build  30001     0     "通过GM命令获取"     1002 
+    2
+    3
+
+
+gameTools.switchFeature
+
+
+------------------
+
+2017.9.29
+
+通过物品 id 找到 _data_getWay 表，然后把查到的数据一个一个放入 mGetwayList
+
+然后根据跳转的 UIID，直接弹窗
+
+这个跳转说起来还真简单，又做完了。
+
+
+
+
+
+
+---------------------------
+
+2017.9.30
+
+国庆前最后一天
+
+uiGetway 已经修改完，保留了原先每个物品通过 GM 命令获取---
+
+--------------------
+
+2017.10.9
+
+国庆假期结束
+
+战斗力变化，这个想写着 gameTools 里面，作为一个全局的函数，别的界面战斗力发生变化时，触发事件，调用这个函数
+
+uiPowerChange 
+
+
+SKLog.Log("**********************************----- 计算战斗力---------------------------");
+
+
+思路有两种：
+
+一是我人工找到所有可能引起战斗力变化的地方，然后调用这个函数，有点像当年接 SDK，友盟这种统计数据的。所谓埋点 
+
+二是写个 Singleton ，然后全局监听战斗力的变化，然后调用这个函数。
+
+问了下毛力立，肯定不会是第一种思路。第一种思路，之后有新的界面，如果引起战斗力变化，依然要加，扩展性不好。
+第二种思路，倒不必自己去实现 Singleton ，而是找到计算战斗力的函数，在这里调用ui的弹出
+
+
+找到了，在 sc_asttr_change_msgCall.lua 101 行
+            SKLog.Log("**************************** 战力改变： from " .. srcFight.fp .. "  to " .. p_attr.new_value );
+
+在这里调用函数就OK
+
+-------------------------------------------
+
+2017.10.10
+
+labmessege 是那种浮动的文字消息，看一下这个的动画是怎么写的，感觉没用到 tween 之类的插件
+
+然后模仿 labmessege 写动画
+
+后来汤可心告诉我，这个动画是 Dotween 写的，直接挂在 UI 的子物体里面了，我没仔细看到。直接搬过来就OK
+
+一个 LocalMove ，一个 Fade 
+
+--------
+
+Horizontal Layout Group
+
+Content Size Fitter
+
+只需要父物体挂  Horizontal Layout Group 和 Content Size Fitter ，然后子物体（比如长度会变的Text ）
+挂 Content Size Fitter 即可
+
+--------
+
+现在我需要延迟一下战力变化的显示，不然会和别的叠在一起.
+
+明天和李峰商量一下怎么弄这个。。。
+
+
+
+--------------------
+
+2017.10.11
+
+堆叠-1 ---
+
+战力变化界面不能touch 
+
+战力变化界面会挡住ui模型 
+
+以上这两个问题指向了同一个问题： openUI
+
+playerData_MessageList = {}
+
+table.insert(playerData_MessageList, type, text)
+cortou
+
+
+跳转的效果图上传了，需要替换一下
+
+仔细思考一下，这种消息管理的 manager 应该怎么做成一个
+
+--------------------------------
+
+2017.10.12
+
+首先修复昨天下午出现的bug, FortBuild---
+
+
+跳转的效果图上传了，需要替换一下---
+
+
+--------------
+
+2017.10.13
+
+只对 multipleLabelMessage 重构，然后把 uiPowerChange 插入到队列里面
+
+保持原来的 multipleLabelMessage 的接口，然后加入新的 type
+
+list:pop() 移除 list 最后面的元素，并获取它的值
+list:shift() 移除 list 最前面的元素，并获取它的值
+
+
+
+playerData_MessageList
+
+
+-----------------
+
+2017.10.14
+
+
+今天差不多把 multipleLabelMessage 的接口保持不变，但是实现可以扩展的功能，写完了
+
+然后更新了Unity 2017.2.0f3---
+
+数字翻滚效果
+
+SKUIText.SetJumpNumber(float startNumber, float endNumber, float jumpTime, float delayTime)
+
+0.02 
+
+
+舰队的弹窗，比如 请选择一种建筑进行修建 界面，替换资源
+
+
+
+数字翻滚效果 还是需要用 Coroutine 实现，这样写起来最方便，不需要 Update 和 FixedUpdate ，开销小一些
+
+
+--------------
+
+2017.10.16
+
+之前做的界面，都要统一一套资源，用模板做
+
+数字翻滚效果用 Coroutine 实现
+----
+FixedUpdate 实现的数字翻滚
+    //private void FixedUpdate()
+    //{
+    //    if (currentFrame <= frames)
+    //    {
+    //        result += delta;
+    //        text.text = Mathf.FloorToInt(result).ToString();
+    //        currentFrame++;
+    //    }
+    //    else
+    //    {
+    //        result = end;
+    //        text.text = Mathf.FloorToInt(result).ToString();
+    //    }
+    //}
+
+------
+
+Coroutine 的实现
+
+    public IEnumerator JumpNumberCoroutine()
+    {
+        while (timeRest > 0)
+        {
+            timeRest -= Time.deltaTime;
+            result = Mathf.Lerp(start, end, (jumpTime - timeRest) / jumpTime);
+            text.text = Mathf.FloorToInt(result).ToString();
+            yield return 1;
+        }
+
+        if (timeRest <= 0)
+        {
+            result = end;
+            text.text = result.ToString();
+            StopCoroutine(JumpNumberCoroutine());
+        }
+    }
+
+最后也只是挂了个 C# 的脚本，中间也用lua试着实现了一下，但是在给 text 赋值的时候有问题，
+而且效率也存在问题，就放弃了。但是log出来的结果也是对的
+
+
+---- text 数字滚动效果 
+--function gameTools.SetTextJumpNumber(uiObj, startNumber, endNumber, jumpTime, delayTime)    
+
+--    --local uiText = uiObj:GetComponent("Text");
+--    local uiText = uiObj;
+--    --uiText.text = startNumber;
+
+--    local co = coroutine.start(
+--        function()
+--            result = 0;
+--            timeRest = jumpTime;
+--            coroutine.wait(delayTime);
+
+--            while timeRest > 0 do
+--                timeRest = timeRest - Time.deltaTime;
+--                result = Mathf.Lerp(startNumber, endNumber, (jumpTime - timeRest) / jumpTime);
+--                --uiText.text = Mathf.Floor(result);
+--                SKLog.Log("-----------"..result);
+--            end
+--            if timeRest <= 0 then
+--                result = endNumber;
+--                --uiText.text = Mathf.Floor(result);
+--                coroutine.stop(co);
+--            end
+--        end
+--        )
+--end
+
+
+-----------------------------------
+
+2017.10.17
+
+总结一下昨天操作步骤，LuaBind 里面注册C#脚本的类名（脚本名和类名一致，不知道这个是不是硬性要求，但是这是Unity的习惯）
+然后SK框架重新生成脚本。
+之后在 trunk 里面查一下，比如我写了一个 JumpNumber 的脚本，就查这个相关的，然后有个一 JumpNumberWrap.cs 这个是生成的
+
+LuaBind.xml *
+LuaBinder.cs *
+JumpNumber.cs +
+JumpNumber.meta +
+JumpNumberWrap.cs +
+JumpNumberWrap.meta +  
+
+所以只要新加一个C#脚本，就会有这么多的脚本改动，修改了两个，增加了四个文件。还好，弄清楚就OK，本质上是注册了一个，有两个是生成的
+
+-------------
+
+今天遇到很傻的一个问题。。。 Unity 项目工程 Hierarchy 下的 Prefab 会不会自动更新？
+最终验证了，现在只要是蓝色的 prefab，是相互关联的，只要改了 prefab，场景里的蓝色 prefab 也会更改。除非是白色，应该是 Unity 2017 的改动
+
+
+研究一下之前的那个插件，UPrefab，这个东西很麻烦，引用，实例， 会不会更新什么，仔细研究一下。。。 
+
+
+福昕阅读器---
+
+战力里面，文字长度和背景板长度在播动画的时候会跳。研究一下 Text 里面的属性
+
+
+1.手里舰队的几个弹出窗口，要换一套美术资源，有美术资源；
+2.改3-4个重要bug
+3.组队里面查看他人信息的窗口美术资源，策划还没跟进，暂时没有美术资源---策划说不会有变动
+4.资源兑换界面的窗口美术资源，策划还没跟进，暂时没有美术资源
+
+
+手里的bug，三个：
+
+1.【要塞】资源采集，当有资源未领取时，拆除建筑，表现错误。
+2. 要塞锻造，物品顺序调整
+3.【红点Tips提示】当舰队里面没有建筑物有红点时，舰队入口仍然有红点提示
+
+
+
+架构 游戏各个模块都很熟悉
+
+渲染 对图形学算法很熟悉，和TA类似，但是也有区别。懂算法，比如 motionblur , bloom 等，但是不知道如何调参数，只能让美术来调参数。
+TA懂算法也会调参数，调成什么样子是他想要的样子。
+
+优化 对底层架构和渲染图形学原理都很熟悉
+
+自认为渲染方面不是很有天赋，就在架构和优化之间选择，图形学需要基本了解
+
+
+------------------
+
+2017.10.18
+
+昨天改了两个舰队相关的bug，拼了一个界面；
+
+然而拼的这个界面并不好看，所以今天还是喊杨琦继续改，还是得出个原图，不然没法看
+
+奇怪的矿洞：
+1.换个小弹窗---
+2.获得的奖励： 居中---
+3.阅历加图标--- 
+4.奖励数字放在下面---
+5.加个背景图---
+
+
+奖励使用 PopTip 
+
+-----------------
+
+2017.10.19
+
+继续昨天没干完的，阅历加图标：看了一眼代码，写死的阅历，那么我UI也做成阅历的图标---
+
+代码上改掉一个遗留的取巧的部分： 原先快速领取背景板是黑色，目的是为了挡住后面的其他页面。其实屏蔽即可---
+
+
+【要塞】资源采集，当有资源未领取时，拆除建筑，表现错误---
+
+
+舰队红点bug---
+
+舰队内有资源没收取，也可以加一个红点显示---
+
+
+__newindex 
+
+-----------------------
+
+2017.10.20
+
+一来就遇到bug，索性还是解决了。忘了判断 uiFort 里面数据是否加载了。---
+
+铁匠要换UI:
+铁匠里面两个弹窗要换资源
+
+改一个小功能。这俩都算成bug了，今明两天解决
+
+-377 -125.5 125.5 377.5
+
+今天只拼了两个页面---
+
+------------------------
+
+2017.10.21
+
+id= 301010024,
+name = "正义重剑",
+itemType = 3,
+kind = 301,
+show_type = 30101,
+
+id= 305000172,
+name = "信念手套",
+itemType = 3,
+kind = 305,
+show_type = 30208,
+
+id= 307000172,
+name = "信念肩甲",
+itemType = 3,
+kind = 307,
+show_type = 30217,
+
+id= 306000172,
+name = "信念头盔",
+itemType = 3,
+kind = 306,
+show_type = 30205,
+
+id= 304000174,
+name = "信念战靴",
+itemType = 3,
+kind = 304,
+show_type = 30214,
+
+id= 303000174,
+name = "信念腿甲",
+itemType = 3,
+kind = 303,
+show_type = 30211,
+
+id= 302000174,
+name = "信念胸甲",
+itemType = 3,
+kind = 302,
+show_type = 30202,
+
+武器 301
+衣服 302
+裤子 303
+鞋子 304
+帽子 306
+肩甲 307
+手套 305
+
+
+今天拼了一个界面，改了一个bug，其他的资源等着美术那边
+
+---------------------
+
+2017.10.23
+
+---
+早上看见一篇blog（知乎关注的陈嘉栋写的），跟我测试的结果不是特别一样， FixedUpdate 的固定更新频率并不对，时间上对不上，不是严格的
+0.02s（默认设置）.
+
+所以 只在物理逻辑的处理中使用 FixedUpdata， 而不要用 FixedUpdate 写别的东西。固定时间更新需要自己写 TimeManager 
+
+----
+
+这边改一下战斗力显示的bug， 
+遇到想要解决的问题是： 连续按下多次，会对应弹出多个窗口。没有写新的窗口覆盖旧窗口的逻辑。---
+
+
+字跳的问题是字体本身问题---
+
+平台跳跃类2d游戏，现在有单向穿透组件了 Platform Effector 2D 
+
+
+------------------
+
+2017.10.24
+
+早上研究了一下3D物体的单向穿透，然后基本成功了
+Y方向上的速度判断，可能还有点问题，因为碰撞到了之后，Y方向上的速度会归零。
+
+可以试着写一个，上一帧的速度Y --- 然而并不好
+
+然后还探索出来一个参数，contact.normal ，这个可以之间判断出是从哪个面碰撞的。但是并不好用，因为是在 OnCollisionEnter 才能获取，
+所以仍然会先把速度降到0，这样不妥。
+
+所以可以弄成一个汉堡的结构，两侧的 trigger 判断碰撞来的方向，两侧的trigger 可以厚一些，反正不会减速，然后决定中间的那个平面是不是 trigger ，今晚可以实现。
+
+--------
+
+按天赋筛选那个，记不清原先是什么样子的了，好在现在的实现也OK，就这样吧。。。---
+
+继续摆UI
+
+滑动列表的 Content 
+
+
+
+---------------------------
+
+2017.10.25 
+
+实践证明了汉堡的这种结构完全没有问题，至少满足了我的需求--- amazing~
+
+今天继续做铁匠铺
+
+昨天毛力立说 Toggle 在无限滑动列表里面的回调是有问题的，那么还是不用 toggle 了---
+
+今天下午遇到了Unity 的bug ，铁匠铺一开始是 16:9 ，切换到4:3 打造东西，UI动画就会位置出错。
+但是如果游戏启动的时候就是4:3，就是对的。。。很神奇。。。
+
+
+嗯，铁匠铺总算全部搞定了，也没啥特别难的，有几点比较重要。
+1.cell里面的元素可以超出去，但最好不要超出去，反正最后可以用 padding 调整位置，间隔可以为负（因为元素大于边框了），这点很重要。
+
+2.按钮记得在添加了之后添加事件，SKUI Button Call
+
+--------------------------------
+
+2017.10.26
+
+资源采集的红点bug，表现非常奇怪，在资源集齐之后，会影响其他战舰的红点显示--- 原来是有一个 break 写在了外层循环，其实本不该写的 ---
+
+下次 UI 出图，先审查一下资源，每一个图都对一遍，没图的地方直接喊他重新标注---   要好好沟通一下，注意沟通方式，不能太强硬
+
+
+目前还剩 
+1. 舰队建造建筑，建筑物详情
+2. 资源站
+3. 战力变化
+4. 查看队友信息
+
+----------
+function Account.withdraw(self, v)
+    self.balace = self.balance - v
+end
+
+a1.withdraw(a1, 100.00)
+----------
+通过冒号可以隐藏 self 的声明
+
+function Account:withdraw(v)
+    self.balance = self.balance - v
+end
+
+a:withdraw(100.00)
+
+-----------------------
+
+点语法，冒号语法，在定义和调用上不需要完全对应，可以点语法定义，冒号调用，也可以用另外一种组合，都行
+
+---------------
+
+1.静态UI绑定，xml作为桥梁，这一整套 SKUI 源码，都是值得看看的. 也可以延伸到整个 SK 框架
+
+当然 SKUI 也不是万能的，还有之前听说过的，
+
+-1.1 pureMVC
+
+-1.2strangeIOC  
+
+2.AseetBundle 资源打包， lua 框架，热更新 
+
+3.物理各种 API ，定点数
+
+4.AI 行为树
+
+5.技能编辑器  场景加载 场景编辑器 剧情编辑（NPC对话，过场动画）
+
+6.背包 
+
+7.本地消息系统，广播，红点系统
+
+8.服务器协议 状态同步 帧同步，目前做的应该是状态同步，物理不知道具体怎么判定的，战斗逻辑的数值估计全在服务器 
+
+
+-----------------
+
+2017.10.27
+
+早上在折腾不规则图形的按钮点击：
+
+发现确定一个小方案，确实难以取舍，各有各的优缺点，才是经常发生的事情：
+
+1.首先林子豪网上查到的方法：图片设置为 read/write able 然后，脚本里设置一个参数
+
+        GetComponent<Image>().alphaHitTestMinimumThreshold = 0.1f;
+
+        alphaHitTestMinimumThreshold 这个是Unity 自带的 alpha 检测的一个阈值，很好用，空白区域都不能点击。
+
+  缺点：图片设置为 read/write able ，运行时，会在内存和 GPU 都保存一份，开销变大很多，不推荐使用（被杨陈否定掉了）
+
+2.汤可心的方法，自己用空白Image弄一个包围盒，或者多个，可行，但是丑。记得 Button本身已经没有Image 了，需要加载 NonDrawingGraphic
+
+  缺点：需要自己一个个手动调整包围盒的位置，每做一个按钮就要搞一次，不自动
+
+3.杨陈还写了一个脚本，PolygonImage ，这个可以生成很多个Image，时间足够的话，可以自己研究一下怎么样从button，用起这个 polygon 数据。
+
+  看了下 PolygonImage 的代码，用了  Sprite sprite = image.overrideSprite; 然后重写了 sprite ，分解成了很多三角形，Unity UGUI Image 自己的接口
+
+
+
+MonoDevlopment 可以看 UGUI源码？？？... 反正我没找到  bitbucket.org/Unity-Technologies/ui 这里有ugui源码
+
+
+未开放的获取途径，等级没到之前，需要被隐藏---
+
+
+---------------------
+
+2017.10.28
+
+PolygonButton --
+
+属性预览居中--- 
+
+基础属性调整文字宽度---
+
+铁匠铺修改显示---
+
+
+----------------------
+
+2017.10.29
+
+
+拼 资源站UI---
+
+资源站面板穿透 bug--
+
+无限滑动列表里面记得设置 Total Count, Content 本身要添加 Content Size Fitter ---
+
+资源站对应xml ---
+
+资源站的模型显示：摄像机位置不对，导致主界面的角色也被显示了出来---
+
+
+-------------------------
+
+2017.10.30
+
+资源站对应代码，并测试
+
+UGUI 源码运行起来---
+
+PolygonButton 代码提交---
+
+1.要塞资源站（正在换UI，差不多OK了）
+2.队友信息显示（换了UI，还未测试）
+3.铁匠铺（完成）
+4.要塞资源采集，要塞建筑建造弹窗，详情弹窗（换了临时UI，美术资源优先级较低）
+5.战力变化（用的临时UI，美术资源未出）
+6.要塞内的所有红点（暂时没用RedNotice红点系统，之后考虑重构）
+7.道具获得途径页面uiGetway，支持跳转功能  （完成） 
+
+8.强化界面
+
+所有页面加声音
+
+------- 
+
+Button : Selectable, IPointerClickHandler, ISubmitHandler
+
+继承 Selectable 实现接口 IPointerClickHandler, ISubmitHandler 这两个接口都在 EventInterfaces.cs 里面
+
+IPointerClickHandler 点击处理
+ISubmitHandler       发送处理
+
+--------
+public class PointerEventData : BaseEventData
+    {
+        public enum InputButton
+        {
+            Left = 0,
+            Right = 1,
+            Middle = 2
+        }
+
+        public enum FramePressState
+        {
+            Pressed,
+            Released,
+            PressedAndReleased,
+            NotChanged
+        }
+
+ 按下，松开，按下后马上松开？ 大概列出来了状态 还有鼠标的 左右中键
+
+
+
+-----------
+        public GameObject pointerEnter { get; set; }
+
+        // The object that received OnPointerDown
+        private GameObject m_PointerPress;
+        // The object last received OnPointerDown
+        public GameObject lastPress { get; private set; }
+        // The object that the press happened on even if it can not handle the press event
+        public GameObject rawPointerPress { get; set; }
+        // The object that received OnDrag
+        public GameObject pointerDrag { get; set; }
+
+        用 GameObject 设置和返回各种点击 ，拖拽
+
+        位置 点击的次数（比如可以双击）  
+
+
+Threshold 阈值
+
+Image : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
+MaskableGraphic 在 MaskableGraphic.cs 里面，core 文件夹
+ISerializationCallbackReceiver   ,    ICanvasRaycastFilter 就在 UnityEngine.dll 里面
+ILayoutElement 在 ILayoutElement.cs 里面， core 文件夹
+
+
+-------------------
+
+2017.10.31
+
+场景切换bug： 没有记录上一个场景，而是直接回到了一个特定场景 uiFortCommon ：这里需要在 wCombineWorld 里面加一个 lastWorld 字段，然后返回的时候 调用 returnLastWorld---
+
+货币控件的系统内容，目前想起来的有  强化，资源站 
+
+母舰在详情页面，显示的 Scale 特殊处理---
+
+UGUI 源码UML图---
+
+-------------
+
+2017.11.1
+
+拼强化装备页面UI- 
+---------------
+
+2017.11.2
+
+拼强化装备页面UI --
+
+开封最大等级设置为 9  
+
+
+显示物品的颜色
+
+    local quality = item:getQuality();
+    local qColor = gameData.getHexColorByQuality(quality);
+
+    string.format("%s%s + %d</color>", qColor, item:getName(), item.mRank)
+
+显示属性的颜色
+
+    local 
+
+
+
+                    if #v.ext_list > 0 then
+                    for i = 1, #v.ext_list do
+                        if v.ext_list[i].ext_type == 1 then
+                            col = gameData.getColor(v.ext_list[i].value);
+                            SKUIText.SetTextColor(self.UI_ID, ui.upgradeInfo.attrList[propIdx].curTxt, col.r, col.g, col.b);
+                        end
+                    end
+                end
+
+----------------
+
+2017.11.3
+
+昨天晚上没做完的属性字颜色，今天问了一下才知道原来没有特殊颜色，显示白色就好。所以下次这种问题先问清楚需求，再改。
+
+强化界面---
+
+开封：
+1. 开封后获得如下属性的 tip
+
+2. attr_list 移动位置---
+
+升星
+
+----------------------
+
+2017.11.4
+
+开封升星的各种文字显示---
+
+升星最大等级设置为 9---
+
+特效：
+
+强化 kaifeng---
+
+开封---kaifengxinian
+
+洗练---xiangguo
+
+升星成功1 2--- 
+
+升星失败---
+
+
+开封获得弹窗---
+
+
+舰队交易中心：货币统一控件---
+
+
+cs_message_test("") --- 
+
+-----------------------
+
+2017.11.5
+
+强化商店加上货币统一控件: ---
+300001 强化石
+300002 开封石 
+
+舰队加特效:
+
+1. 特效挂上去。---
+
+2. 除了资源采集的两个，其他都挂上了，特殊处理一下这里
+
+3. 代码控制特效显示与否：有云的时候不显示
+
+
+[10701] ={id =10701,building_type=8,name= "水晶提炼"
+[10801] ={id =10801,building_type=9,name="布料收集"
+[10901] ={id =10901,building_type=10,name="皮革制造"
+[11001] ={id =11001,building_type=11,name="矿石开采"
+
+land10chuan3
+land10chuan5
+land11chuan3
+land11chuan5
+
+
+
+10701 11001  fort_icon_004 特效：chuan5
+
+10801 10901  fort_icon_003 特效：chuan3
+
+-----------------------------------
+
+2017.11.6
+
+http://10.10.17.100/iisadmpwd/   修改用户密码
+
+继续昨天的舰队特效---
+
+特效层级---
+
+战力提升
+
+
+map_zc_tiejiangpu01/ch_npc_tj_p/npc_ti_all/Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 Spine1/Bip001 Spine2/Bip001 Neck/Bip001 R Clavicle/Bip001 R UpperArm/Bip001 R Forearm/Bip001 R Hand/ch_hero_tj_w_003/tiejiang_futou001
+
+铁匠铺打造动画 bug---
+
+抽烟bug---
+
+
+Tags 
+        { 
+            "Queue" = "Transparent"
+            "RenderType"="Transparent"
+            "IgnorProjector" = "True" 
+        }
+
+-------------------------
+
+2017.11.7
+
+再次修复铁匠铺bug，顺便换了一个名字，叫 锻造---
+
+强化界面换各种字的颜色，代码实现
+
+昨天写的shader可以加进去，要塞界面换资源---
+
+
+修改了点两次“自动设置UI原件ID”，会引起 PolygonImage 脚本丢失的bug---
+
+
+10201
+
+--------------------------------
+
+2017.11.8
+
+fb_finish---
+
+矿洞，皮革制造这里面的 UI  ：res_bg_01  
+
+矿洞
+
+屏蔽 getway GM命令，写一个开关
+
+强化界面 getway bug---
+
+getway 滑动列表的 bug---
+
+---------------------
+
+2017.11.9
+
+矿洞换名字---
+
+一大堆显示问题，懒得记了---
+
+边缘发光效果
+
+拼 建筑建造成功的 UI---
+
+加特效
+
+----------
+ vert()
+// 顶点在世界空间中的法向量坐标
+o.normal = mul(float4(v.normal,0), _World2Object).xyz;
+
+------------
+
+2017.11.10
+
+_call 这个会引起lua插件崩溃，很醉，估计是 _xxx 是 lua 保留字段，一点就触发了搜索什么的
+
+然后写好了一个关闭声音的 api， 在 sk_soundManager 里面，
+给播放的音效给了一个 soundTag ，按照tag 可以找到特定正在播放的音效，然后停止播放。---
+
+--------------
+2017.11.11
+
+双十一，来加班，美滋滋。手里没什么活儿，
+
+1.研究一下UGUI源码
+
+InputModule 
+ - StandaloneInputModule 应该是鼠标和键盘的输入
+ - TouchInputModule 
+
+ ExecuteEvents 这里面有对象池
+
+ private static readonly ObjectPool<List<IEventSystemHandler>> s_HandlerListPool = new ObjectPool<List<IEventSystemHandler>>(null, l => l.Clear());
+
+ObjectPool 在 UI/Core/Utility 中，值得借鉴： 首先是用了m_Stack存储对象。 Release 函数，用来回收对象，压入对象池的stack。Get 函数，使用对象，弹出对象池stack。 
+
+下次可以看 Core 里面的东西了
+
+
+
+2.期间可以穿插着看一下图形学的东西，或者 SKUI 源码
+
+3.重构 战斗力变化，multipleLabelMessage ，也先记一下，排进日程
+
+4.跳转那个bug，先排进日程
+
+5.清其他bug，也排进日程
+
+
+
+
+今天测到两个bug：一个是特效显示反了，不知道为什么，是之前那个 chuan3 chuan5 ，改好了---
+
+另一个是资源站界面，东西消耗完之后没刷新字体颜色---
+
+---------------------------------
+
+2017.11.13
+
+重构 战斗力变化，multipleLabelMessage 
+
+首先研究类似功能 SKUIHeadBar
+
+修复了几个 bug---
+
+
+sk_uguiManager  open 
+
+可以先把 powerChange 这边搞定,转成 sk_uguiManager.open
+
+
+
+SKUnityTools.getComponent(SKUITransform.CheckTransform(self.UI_ID, ui.videoList[i].video).gameObject, "", "SKFramework.SKMoviePlayer"); 
+
+-------------
+
+2017.11.14
+
+今天成功在 VSCode 中成功断点，确实还挺好用的---
+
+jumpNumber 还是不想再写成在lua里，打算用 getComponent ---
+
+powerChange 页面改成了 open 打开---
+
+特效---
+
+调试，log 出来调用的顺序，时间。  得出结论： 几乎是同时，但是其实战斗力变化的通知在先---
+
+写在消息队列里面，通过 UI 的 ID 来调用显示接口，然后按优先级排序，然后显示
+
+-------------------
+
+2017.11.15
+
+讨论了一下，还是觉得先不写这个消息队列了，细节处理起来有点麻烦。
+
+战斗力变化那里加个延时显示的接口就可以了--- 在Open 之前调用
+
+
+182 176 151 171
+
+锻造选中框 和 强化选中框 一致
+
+锻造右边的背景框和 强化 一致---
+
+强化右下角按钮 铁匠铺 一致---
+
+
+272.5 -25 
+
+------------------------
+
+2017.11.16
+
+锻造选中框 和 强化选中框 一致--- createRole icon am 017
+ 
+锻造界面去掉 获取按钮红色框---
+
+强化去掉 获取按钮红色框---
+
+战舰制造去掉 获取按钮红色框---
+
+搞定显示时间---
+
+开封10
+
+升星30
+
+buttonCell 父物体，Root如果手动设置，设置当前这个父物体，详见 fort_build_choose--- 总算解决了这个buttoncell的问题
+
+
+------------
+
+2017.11.17
+
+今天又改了一下战斗力变化的方法调用，加了一个消息通知，上一个UI关闭了，就可以弹战斗力变化的页面了---
+
+传了一个 _EventType ,动态 addListener ，感觉毕竟是自己想出来的，不错---
+
+UIBlend 也需要用颜色通道来传入一个值, 假如颜色通道还是需要传值，那就没办法。---
+
+还是动态获取 Material ，然后 SetFloat  
+
+MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();  
+obj.GetComponent<Renderer>().GetPropertyBlock(propertyBlock);  
+propertyBlock.SetColor("_Color", new Color(0.5f, 0, 0, 1));  
+obj.GetComponent<Renderer>().SetPropertyBlock(propertyBlock);  
+
+
+--------------
+
+2017.11.18
+
+今天继续研究如何给每个gameobj 不同的material 参数：
+
+-无论是手动拖 Mat 赋值，还是 mat = GetComponent<Image>().material;  最终改变的值都会影响所有用这个 material 的物体。
+
+而且如果用 mat = GetComponent<Image>().material ，一般都是第一个可以影响其他的物体，其他的就无法影响 material 了
+
+刚才说的是 Image ，如果是 Sprite，结果又不一样。 Sprite 的每一个可以有自己的值，不影响其他的。估计是Sptite 的渲染和 Image 的不太一样
+
+---
+        propertyBlock 
+
+        MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        GetComponent<SpriteRenderer>().GetPropertyBlock(propertyBlock);
+        propertyBlock.SetFloat("_BlendRange", blendRange);
+        GetComponent<SpriteRenderer>().SetPropertyBlock(propertyBlock);  
+
+        这个也是可以的，用在Sprite上不影响其他的，只从功能上来说和SetFloat几乎一样。Image 那边因为没有对应的方法，也不知道用什么 Renderer ,所以没有验证
+
+        MaterialPropertyBlock 这个的优化，是Material 没有生成 Instance， 而SetFloat每一个都有一个Instance，所以优化了
+---
+
+
+18级也不能解锁的bug，然而发现是服务器配置没上传。所以下次可以先问问服务器。。。如果有什么难以解决的bug，估计是这种---
+
+获取途径的UI---
+
+
+矿洞等级2开放---
+
+-------------
+
+2017.11.20
+
+舰队红点系统重构，接入新的红点系统
+
+1.先看现有红点系统的代码
+
+redNotice.lua
+gameData.lua
+function gameData.getNoticeData(id)
+function gameData.getNoticeByUI(uiId)
+
+extraInfoInit() 这个函数首先按 pairs(_data_notice) 做了id校正（就是让id和循环顺序相同，防止写错）
+
+---
+然后通过子节点，给有子节点的父节点加入了孩子。 动态的在表里加了一个 childList 
+
+        parentNotice = _data_notice[v.parentId];
+        if parentNotice ~= nil then
+            parentNotice.childList = parentNotice.childList or { };
+            table.insert(parentNotice.childList, k);
+        end
+---
+
+parentNotice.childList = parentNotice.childList or { }; 
+
+这种写法分析一下。 如果 parentNotice.childList 存在，那么应该返回 parentNotice.childList，否则返回 {}
+
+table.insert(_data_notcie_ui[uiId], k);
+_data_notcie_ui 也会对应生成一个 uiId 作为 id 的 table ，对应有多条 _data_notcie_ui 的 id  k ，
+
+
+
+2.移除舰队的红点
+
+3.配置舰队红点系统
+window_fort:
+-build/red_notice
+
+window_fort_build
+landList/land (1)/red_notice
+
+window_fort_build_info
+Frame/ButtonList/red_notice
+
+[22] = {
+    id = 22,
+    desc = "主界面舰队按钮",
+    parentId = -1,
+    uiFocus = {
+        uiId = 17,
+        path = "build",
+        offset = {27, 39.2},
+        scale = 1,
+    },
+    checkInfo = nil, -- 依赖于 23 24 25 ... 8个战舰
+
+},
+[23] = {
+    id = 23,
+    desc = "舰队界面每艘战舰可建设",
+    parentId = 22,
+    uiFocus = {
+        uiId = 2213,
+        path = "func_area/bag",
+        offset = {58.8, 42.6},
+        scale = 1,
+    },
+    checkInfo = {
+        funcId = -1,
+        checkFunc = {
+        checkopen,
+        _playerData.soul_cancombinNotice}
+    },
+
+},
+[24] = {
+    id = 24,
+    desc = "资源采集舰可收集",
+    parentId = 22,
+    uiFocus = {
+        uiId = 2213,
+        path = "func_area/bag",
+        offset = {58.8, 42.6},
+        scale = 1,
+    },
+    checkInfo = {
+        funcId = -1,
+        checkFunc = {_playerData.soul_cancombinNotice}
+    },
+
+},
+[25] = {
+    id = 21,
+    desc = "灵体任务",
+    parentId = 4,
+    uiFocus = {
+        uiId = 2213,
+        path = "func_area/bag",
+        offset = {58.8, 42.6},
+        scale = 1,
+    },
+    checkInfo = {
+        funcId = -1,
+        checkFunc = {_playerData.soul_cancombinNotice}
+    },
+
+},
+
+---------------------
+
+2017.11.21 
+
+
+母舰兑换刷新，测试---
+
+狩猎中心奖励刷新，测试---
+
+战舰建设刷新，测试---
+
+                        for j = 24, 30 do
+                            sk_eventManager.postEvent(_EventType.Event_Common_Notice, j);
+                        end
+
+采集资源刷新，测试---
+
+改各种bug---
+
+--------------------------------------
+
+2017.11.22
+
+装备洗练后的跳转提示
+
+btnReplace  保存按钮
+
+--- 洗练的弹窗
+if self.mWashWarning then
+        local name = self.mSelectedEquip.data.mData.name;
+        name = _richTextColor.quality[self.mSelectedEquip.data.mData.quality] .. name .. _richTextColor.endcolor;
+        local s = gameTools.split(_localization(1406), "%s", { name });
+        gameTools.messageBox(s, self, self.refineEquip, _e_MsgBoxStyle._two_button, nil, "确定", "取消");
+    else
+        self:refineEquip();
+    end
+---
+
+self.mWashSaveWarning 来确定保存与否---
+
+在切换装备，未保存的时候，弹窗---
+
+弹窗确认之后放弃洗练内容---
+
+在切换状态，未保存的时候，弹窗
+
+-----------------
+
+2017.11.23
+
+昨天的 bug 解决了
+gameTools.messageBox 这里的 call 不能直接连续 call 两次，需要加一段 coroutine.wait(0.2)---
+
+这里其实是 callback 的嵌套问题，应该可以解决的，而不是这样解决。修改 uiPopTip ，让它支持嵌套调用 
+
+uiGetway 里面的跳转判断：等级不足的也显示，但是点击之后提示 未达到该物品的获取途径开放等级---
+
+未达到该物品的获取途径开放等级或相关功能尚未被解锁，请在 16级 后在 舰队 中修建 烹饪--- 
+
+
+36-57
+
+跳转到矿洞（其他几个建筑也一样）。只需要拿到当前矿洞所在的 buildingId 即可 
+
+
+------------
+
+2017.11.24
+
+强化界面跳转的bug
+
+-- 强化
+function UIFortCommon:OnButton_equipment()
+    gameTools.log("OnButton_equipment");
+    local equipCount = #_playerData.getAllEquip();
+    gameTools.log("total equip count = " .. equipCount);
+    if equipCount == 0 then
+        gameTools.labelMessage("暂无装备可进行强化");
+        return;
+    end
+    if sk_worldManager.curWorld.openWorld ~= nil then
+        sk_worldManager.curWorld:openWorld(gameWorld.WORLD_EQUIPMENT);
+        local ui = sk_uiManager.findUI(gameUI.Equipment);
+        ui:autoSelectEquip();
+    end
+end
+
+在强化界面外面初始化了一部分数据，这样做别的界面跳到强化就肯定有问题，要改---
+
+跳转矿洞的数据准备---
+
+
+------------------------
+
+2017.11.25
+
+Timer 修改，原先的 Coroutine 改掉
+
+github.com/skywind3000/mini3d/blob/master/mini3d.c   
+
+
+C# 里面可以写 Debug.Break(); 来暂停游戏运行。感觉蛮方便。---
+
+
+--------------
+
+2017.11.27
+
+LeetCode 刷了3题，成就感还OK
+
+abca
+
+pwwwkv
+
+bbtabcd
+
+终于想明白了，昨天是因为滑动窗口的时候，没有跳过已经加了的元素，就很折翼。
+完全可以跳过的，用 jumpTo 记录一个值，下次直接循环从这里开始。也相当于滑动窗口了。
+
+    class Solution
+    {
+        public int LongString(string s )
+        {
+            int ret = 0;
+
+            //List<char> subString = new List<char>();
+            HashSet<char> subString = new HashSet<char>();
+
+
+            for (int i = 0 , jumpTo = 0; i < s.Length; ++i)
+            {
+                if (subString.Count > 0 && i > 0)
+                {
+                    subString.Remove(s[i-1]);
+                }
+
+                for (int j = jumpTo; j < s.Length; ++j)
+                {
+                    if (!subString.Contains(s[j]))
+                    {
+                        subString.Add(s[j]);
+                    }
+                    else
+                    {
+                        jumpTo = j;
+                        break;
+                    }
+
+                    ret = Math.Max( ret, subString.Count);
+                }
+            }
+
+            return ret;
+        }
+    }
+}
+
+
+最长回文字符串。这个明显记得做过。真的很想直接用 stack 来做。因为毕竟没有超过 1000，可以做了提交一下试试
+
+Timer 修改，原先的 Coroutine 改掉
+
+local timer = nil;
+timer = ServerTime.AddTimer(_e_timerType._RemainTimeSecond, 60, nil, 
+function()
+    print("In TickCallback left time is " .. tostring(timer.leftTime));
+end,
+_e_timer_TickType._Second
+);
+
+
+--------------------------
+
+2017.11.28
+
+开采界面，改一下查看area的逻辑：
+
+加一个方法：显示正在采集的信息
+
+    -采集中也能看---
+
+    -采集中的倒计时时间   self.mSelectedTime: 已经选中的时间index
+
+    -倒计时结束后领取奖励按钮
+
+
+
+-------------
+
+2017.11.29
+
+采集界面完成 ---
+
+301030126
+
+强化 开封 洗练 升星 ，点击了之后回调---
+
+sk_eventManager.postEvent(_EventType.Event_Common_Notice, 29);
+
+
+744
+
+
+self.mCurState == _ui_state.star
+
+
+
+self:selectLand(self.mSelectedLand)
+
+
+
+整个刷新
+
+
+----------------
+
+2017.11.30
+
+3567349380 还是买了 luaide ，确实好用，终于可以跳转了。。。
+
+
+
+    if self.mAutoSelectedData ~= nil then 
+        self.mSelectedEquip = self.mAutoSelectedData;
+    else
+        self.mSelectedEquip = nil;
+    end
+
+
+
+
+
+---------------------
+
+2017.12.1
+
+未保存，离开之后。
+重新回到界面，还是未保存: 这个由于不光是客户端的数据，服务器那边也只是存了一个临时数据。
+假如客户端存储了，下线了，下次上线可能会和服务器数据冲突。目前策划没提更多需求，如果由于组队副本离开页面，
+就直接丢弃未保存的洗练数据。 ---  显示bug也改好了，是因为 self.mWash  忘了清空了。---
+
+
+铁匠铺数据初始化重写--- 
+
+铁匠铺 强化界面 调用接口全部改掉，自动 awake 和 open 会重复加载页面，这种情况要避免---
+
+-------------------------------
+
+2017.12.2
+
+
+
+aab  c*a*f*b  true  
+aab  c*a*bd   false
+aab  c*a*bd*  true 
+
+先出三组数据 
+
+查看技能说明需要长按很久，有点不爽，然后一松开就没了，很费劲  10min
+
+队友从天而降是什么鬼，跳伞过来的吗？
+
+副本内小怪没有经验，少了很多反馈
+
+小怪不掉东西不掉金币，不能摸尸体，少了很多反馈
+
+脚部没有完全踩到地面，角色走路有一种浮空感。角色走楼梯的时候脚部没有相应IK动作
+
+技能动作比较单一，只有一套动作。
+
+战士旋风斩旋风和人物模型没有对应，感觉很违和
+
+解锁新技能的时候没有弹出技能介绍和相应的引导。比较茫然
+
+12级解锁了灵体商店，但是没有灵石，什么也买不了，很生气
+
+-------------------------------
+
+2017.12.4
+
+WLAN 
+IP 10.10.3.21
+子网掩码 255.255.255.0
+默认网关 10.10.3.254
+DHCP 10.10.201.1
+DNS  61.139.2.69
+     114.114.114.114 
+
+
+
+IP 10.10.10.207
+子网掩码 255.255.255.0
+默认网关 10.10.10.1
+DHCP 10.10.17.100
+DNS  10.10.17.100   
+     61.139.2.69   
+
+10.10.20.1
+
+网络弄了半天也没有什么进展，比较麻烦
+
+罗马数字转数字，很快就做完了，确实是 Easy
+数字转罗马数字，思考一下，难度在哪里
+
+3999 分解成 3000 + 900 + 90 + 9
+
+一堆字符串的最长公共前缀 string[] strs
+                               
+这题先用暴力搜索试一下，总觉得也太简单了吧。没想到真的这么简单，直接A掉---
+
+
+修改客户端数据，data_fort_res ，然后选XZQ服务器
+
+
+
+
+building.mNotice=false; 这个数据段还得跟一下，然后 playerData里面的数据Timer也得改
+
+
+-------------------------------
+
+2017.12.5
+
+4498500
+
+for (int i = 0; i < n; ++i)
+            {
+                for (int j = i + 1; j < n; ++j)
+                {
+                    if (!listPairs.ContainsKey(nums[i]) && !listPairs.ContainsKey(nums[j]) ) 
+                    {
+                        // 插入第一个元素 nums[i] nums[j]
+                        twoSum[k, 0] = i;
+                        twoSum[k, 1] = j;
+                        twoSum[k, 2] = nums[i] + nums[j];
+                        LinkedList<int> numList = new LinkedList<int>();
+                        numList.AddLast(nums[j]);
+                        listPairs[nums[i]] = numList;
+                        ++k;
+                    }
+
+                    else if( listPairs.ContainsKey(nums[i])  && !listPairs[ nums[i] ].Contains(nums[j]) )
+                    {
+                        // 含有元素 num[i] ，不含元素 nums[j]
+                        twoSum[k, 0] = i;
+                        twoSum[k, 1] = j;
+                        twoSum[k, 2] = nums[i] + nums[j];
+                        listPairs[nums[i]].AddLast(nums[j]);
+                        ++k;
+                    }
+                }
+            }
+
+4445075
+
+上面这段代码是典型的失败案例，判重算完之后，基本没减少多少元素，然而时间巨长
+
+-----------
+
+fort_builidng
+playerData_fort
+
+---
+
+强化界面 修改切换排序。切换之后把选中的物品排在第一个
+
+-2 -1 1 2
+ 0  1 2 3  
+
+-4 -1 -1 0 1 2 
+ 0  1  2 3 4 5  
+
+--------------------
+
+2017.12.6
+
+two sum 
+
+首先对数组按小到大排序，然后设定两个指针head、tail分别指向排序好的数组的首尾：                                     
+
+如果两个指针对应的元素和等于target，那么找到了
+如果两个指针对应的元素和小于target，那么需要增加和的大小，则把head指针向后移动
+如果两个指针对应的元素和大于target，那么需要减少和的大小，则把tail指针向前移动
+head赶上tail指针时，结束
+由于本题中需要返回最后找到的数对的索引，因此，排序是我们不移动原来数组的元素，只是把元素的的索引放到一个新的数组，对这个新的索引数组排序
+
+
+16 17 18 19 20 今天刷了5题，都不多难
+
+
+-----------
+
+2017.12.7
+
+21 昨晚还是刷掉了，不难。昨天共刷6题
+
+22 有点难，如果只转化成求n个
+
+/**
+ * Definition of TreeNode:
+ * class TreeNode {
+ * public:
+ *     int val;
+ *     TreeNode *left, *right;
+ *     TreeNode(int val) {
+ *         this->val = val;
+ *         this->left = this->right = NULL;
+ *     }
+ * }
+ */
+class Solution {
+public:
+    /**
+     * @paramn n: An integer
+     * @return: A list of root
+     */
+    vector<TreeNode *> buildT(int ld, int rd){
+        vector<TreeNode *> ans;
+        if(ld == rd) {
+            TreeNode *T = new TreeNode(ld);
+            ans.push_back(T);
+            return ans;
+        }
+        if(ld > rd){
+            ans.push_back(NULL);
+            return ans;
+        }
+        for(int i=ld; i<=rd; ++i){
+            vector<TreeNode *> ansLeft = buildT(ld, i-1);
+            vector<TreeNode *> ansRight = buildT(i+1, rd);
+            for(auto lx : ansLeft)
+                for(auto rx : ansRight){
+                    TreeNode *T = new TreeNode(i);
+                    T->left = lx;
+                    T->right = rx;
+                    ans.push_back(T);
+                }
+        }
+        return ans;
+    }
+    
+    vector<TreeNode *> generateTrees(int n) {
+        // write your code here
+        vector<TreeNode *> ans = buildT(1, n);
+        return ans;
+    }
+};
+
+
+C程序设计的抽象思维
+the little schemer
+
+
+---------------
+
+2017.12.8
+
+
+首先把昨天那道看起来很简单的题A了，一遍就过了，很开心。就是直接交换 AB 的指针就行，记得还有
+->A 指向A的指针，可以定义为iterLast. ---
+
+
+
+https://github.com/getlantern/forum#  蓝灯
+
+
+            ListNode iteri = head0.next;
+            while (iteri != null)
+            {
+                Console.Write(iteri.val + "->");
+                iteri = iteri.next;
+            }
+            Console.WriteLine();
+
+----------------------
+
+2017.12.9
+            
+首先做一下昨晚那题
+
+        // 第一时间想到的是辗转相除法，然而这个是算最大公约数的，而且并不对。
+        // 然后看题解全是位运算的， << 左移是乘以2的运算，都是基于这个思路做的。
+        // 大概是这么个思路， divisor 不断乘以 1，2，4，8 也就是位移0位，1位，2位，3位。。。 ，直到大于 dividend
+        // 然后用 dividend - divisor * n = left , 再对剩余的 left 作出同样操作，最后 left 等于0，结束. 
+        // 既然递归是弱项，那么这题就写成递归的
+
+比如 15 3 
+ 15 - 3 * 4  = 3  (4 是不断试出来的，令left >= 0 的最大值)
+ 然后对于剩余left = 3 ，继续调用 
+
+ 3 - 3 *1 = 3
+
+ 1 + 4 = 5.
+ 
+------------------
+
+2017.12.11
+
+昨天在家做了第30题，substring 和 dictionary 确实帮了大忙---
+
+今天看一下最长可用括号这个，
+
+(()  的最大长度是2
+)()()) 的最大长度是4
+
+
+比如 dp[i,j] , i = 0, j = 2 表示 (() 
+那么可以由 dp[i+1,j] 表示 ()，这时候 parenthese[i+1,j] = 0 然后再加上 parStr[i] 里面的左括号，
+把左括号记为-1，右括号记为1，那么这时候 parenthese[i,j] = -1 
+
+dp[1,2] = 2 推论出 dp[0,2] = 2
+
+然后假设变成 (()) 也就是 dp[0,3] = dp[0,2] + { parStr[3] 是否为右括号 } = 4 
+
+但是我觉得写dp转移方程有点恶心，parenthese[i,j] 这个可能想的有点问题，最好能替代掉 
+
+----------
+
+强化转移
+
+rank 2位
+level 3
+puton_type 2
+seat 
+
+
+先去掉原先的 level 3位---
+
+
+强化最大等级---
+
+装备强化需要等级限制
+    10级的角色，只能强化到10级，以此类推。
+
+
+当一件被强化过的装备，处于被卸下（在背包里）状态时，增加一个按钮“强化转移”。---
+
+
+306 306 76
+583 583 145
+
+
+-------------
+
+2017.12.12
+
+如果相应位置有装备，提示“即将把强化等级20（强化等级）转移到XXX（装备名）上，确定吗？” ---
+
+强化转移之后，收到服务器返回的数据，关闭UI---
+
+BoleQQ
+
+---------------
+
+2017.12.13
+
+if v.kind == 1 or(v.kind == 6 and #v.ext_list > 0) then
+
+            local idx = self.mCurPropList[v.kind * 100 + v.prop_type].idx;
+            if idx == nil then
+                return;
+            end
+    if v.value < self.mCurPropList[v.kind * 100 + v.prop_type].value
+
+
+    //// 32 题重新用一维DP做，假设 dp[i] 是从 k 到i-1 最大的子串，而且子串合法，同时 i-1 刚好是 ')'
+    //// 那么 dp[i-1] 有 k~i-2 合法，最大子串 dp[i] = dp[i-1]+2 + ... 
+    //// 其中 和 i-1 这个右括号匹配的，应该是  i -1 - dp[i-1] - 1 ，这个应该是 '('
+    //// 前面可能还有 dp[ i-1- dp[i-1] -1 ] 也是合法的，所以 dp[i] 由这两部分组成
+    //// 准确来说状态由 dp[ i-1- dp[i-1] -1 ] 转移过来的
+
+
+31   1 1 5   123 
+     1 5 1   132
+
+
+Talent_type
+
+
+
+
+--------------------------
+
+2017.12.14
+
+首先水了一道很简单的题，然后开始做一道数独的判定。
+这题看着就像做过了
+
+数独的判定还是很简单的，现在让自己做一个数独的答案，而且是有唯一解的
+
+
+-*-------------------------
+
+2017.12.15
+
+数独那题拿 hashset 做还是ok的，
+
+
+回溯的伪代码
+
+bool Recursion(currentStep)
+{
+    if(condition == true) return true;
+
+    do()
+    
+    if(condition == true) return true;
+
+
+    // 这步相当于预拿到测下一步的结果，然后判定如果已经得出答案，就不继续递归了，所以有 if( Recursion(nextStep) )return true;
+    if(Recursion(nextStep)){return true;} // 这时候递归深度最深. 递归到这里还没有结束，还会继续返回上层，把true 传递回去
+    
+    // 所以这一步一定是得到了错误结果，才会执行的回溯
+    redo()
+
+}
+
+
+需要换两个特效
+
+
+1
+11
+21
+1211
+111221
+
+38 题过了，还是挺简单的，用了一个滚动数组，存储。
+
+39 感觉是完全背包还是无限背包，但是说要刚好加起来等于，而且还要求所有的方案，那么只能回溯了
+
+
+7 -2 * 3
+
+
+
+
+for(int i = candiTh; i < canditates.Length; ++i)
+                    {
+
+                        // 这句写在回溯里面相当于剪枝，把同一层的相同的元素，只加入第一个，其他的相同元素只能放在下一层，所以就避免了重复
+                        if (i > candiTh && canditates[i] == canditates[i - 1]) continue;
+                        // do
+                        listTemp.Add(canditates[i]);
+
+                        
+                        Recursion(ref canditates, target - canditates[i], i + 1, ref listTemp);
+
+                        // redo
+                        listTemp.Remove(canditates[i]);
+                        
+                    }
+
+--------------
+
+2017.12.16
+
+41
+
+3 4 1 2 
+
+----------------
+
+2017.12.18
+
+
+    x x x x   内层循环j
+      y y y   外层循环i
+    z z z z   
+  z z z z
+z z z z
+-------------
+
+0    1    2    3    4    5
+                        0   1   2    3    4    5    
+4 5698 7346 4654                       6465 4565  j
+0    1 6540                       3265 4654 5620  i
+                                       
+                                       2565 5300
+                                  2124 5510
+                             1490 4725
+                                  3633 3300
+                             3008 8110
+                        2110 8225          
+-------------------
+
+2017.12.19
+
+获得当前角色的职业   _playerData.mRoleInfo.profession 然后关联 professions 字段  原来这个已经做过了---
+
+获得当前角色的等级    _playerData.mRoleInfo.level
+
+获得当前角色的天赋  local talent = _playerData.getRoleTalent();
+
+如果当前天赋存在，那么筛选框切换到当前天赋
+
+如果还是新手天赋，那么筛选框内显示默认天赋，天赋id靠前的
+
+
+
+j = 5
+i = 0
+
+1 10    10/5-1
+2 15    15/5-1
+3 20    20/5-1
+
+
+2111 2724 8593 1375 5300
+
+
+------------------
+
+2017.12.20
+
+preview 要读的是 limit_level 
+equip_level
+limit_level 
+
+
+dp[0] = 0
+dp[1] = dp[0]+1 = 1
+dp[2] = min( dp[0]+1 , dp[1]+1) = 1
+dp[3] = min( dp[1]+1 , dp[2]+1) = 2
+dp[4] = min( dp[3]+1 , dp[1]+1)
+
+
+
+
+
+
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        int n = nums.size(), step = 0, start = 0, end = 0;
+        while (end < n - 1) {
+            step++; 
+            int maxend = end + 1;
+            for (int i = start; i <= end; i++) {
+                if (i + nums[i] >= n - 1) return step;
+                maxend = max(maxend, i + nums[i]);
+            }
+            start = end + 1;
+            end = maxend;
+        }
+        return step;
+    }
+};
+
+-----------------------
+
+2017.12.21
+
+
+快速幂，首先比如想求 a^11 = a^8 * a^2 * a^1 
+
+
+
+---
+ 
+如果我这么写，就写了一个全排列，但是没判重复，就是说 1 1 1 ,1 1 2 ... 3 3 3 这种，三个元素27个
+
+public class Solution
+    {
+        List<IList<int>> ret = new List<IList<int>>();
+
+        public IList<IList<int>> Permute(int[] nums)
+        {
+
+            List<int> answer = new List<int>();
+            DFS(ref nums, ref answer, 0);
+            return ret;
+        }
+
+        public void DFS(ref int[] nums, ref List<int>answer, int depth)
+        {
+            if (depth > nums.Length ) return;
+            if (depth == nums.Length)
+            {
+                ret.Add(answer);
+                return;
+            }
+
+            for (int i = 0; i < nums.Length; ++i)
+            {
+                answer.Add(nums[i]);
+                DFS(ref nums, ref answer, depth+1);
+                answer.Remove(nums[i]);
+            }
+            return;
+        }
+    }
+
+
+1 1 2
+1 2 1
+
+t = a
+a = b
+b = c
+c = d
+d = t
+
+
+---------------
+
+2017.12.23
+
+昨天居然少记了一天...
+
+今天做了几道很水的DP题
+
+1
+1
+
+2  = 2
+1,1
+2
+
+3  = 3
+1,1,1
+2,1
+1,2
+
+4  = 5
+1,1,1,1
+
+2,2
+
+2,1,1   3后面+1
+1,2,1   3后面+1
+
+1,1,2   3前面+1
+1,2,1   3前面+1，但是重复了
+
+5 = 8
+1,1,1,1,1
+
+2,2, 1
+1 ,2,2
+
+2,1,1, 1
+1,2,1, 1
+
+1 ,2,1,1 --
+1 ,1,2,1
+
+1,1,2, 1 ---
+1 ,1,1,2
+
+2,1,2 
+--------------------
+
+2017.12.25
+
+N-皇后的问题，现在用hashSet写还挺简单，然后研究了一下
+对角线的性质，i+j  i-j  都有某个固定值，这样的坐标就在一条对角线上
+
+     2,0 
+     3,1 
+     4,2
+5,7  5,3
+6,6  6,4
+7,5
+
+
+1   2   3   4   5   6   7   8
+9   10  11  12  13  14  15  16
+17  18  19  20  21  22  23  24
+25  26  27  28  29  30  31  32
+33  34  35  36  37  38  39  40
+41  42  43  44  45  46  47  48
+49  50  51  52  53  54  55  56
+57  58  59  60  61  62  63  64
+
+
+
+
+记得提交要写提交记录
+
+-----------------
+
+2017.12.26
+
+首先处理收到消息的逻辑
+
+如果投递，那么创建 ErrorPoster 这个游戏物体，然后 don't Destroy 
+
+clientErrorPoster.lua
+
+否则不处理  
+
+
+clientErrorPoster.lua 这个同时还可以接受来自 C# 的错误，然后转发给服务器
+
+
+
+
+void Awake()
+        {
+            Application.logMessageReceived += LogCallback;
+        }
+
+        void LogCallback(string condition, string stackTrace, LogType type)
+        {
+            while (logList.Count >= MAX_LOG)
+            {
+                logList.RemoveAt(0);
+            }
+            switch (type)
+            {
+                case LogType.Exception:
+                case LogType.Error:
+                    logList.Add(new LogData(condition + stackTrace, 2));
+                    break;
+                case LogType.Warning:
+                    logList.Add(new LogData(condition, 1));
+                    break;
+                default:
+                    logList.Add(new LogData(condition, 0));
+                    break;
+            }
+        }
+
+
+C# 脚本挂在游戏物体上
+
+
+-------------------
+
+2017.12.27
+
+今天代码写完了，自己机器上验证成功了，但是测试这边还是有问题
+
+各种工程上的,需要更新，这次还不错，全都提交了的。。。
+
+
+-------------------
+
+2017.12.28
+
+牛顿迭代法做了一道 sqrt(x) 的题目，比较简单---
+
+
+abcdeeee
+bcdeefee
+
+自己编了两个数据，都不知道这个答案应该是多少... 应该是2
+0插入一个a 
+删除f
+
+
+
+
+
+操作：
+1.插入一个字符
+2.删除一个字符
+3.替换一个字符
+
+
+   012
+s: abc
+p: bc
+
+dp[0,0] = 1
+
+dp[1,0] = dp[0,0] + 0 = 1 
+
+dp[2,0] = dp[1,0] + 1 = 2
+
+dp[0,1] = dp[0,0] + 1 = 2
+
+dp[0,2] not valid
+
+dp[1,1] = dp[0,0] + 1 = 2
+
+dp[2,1] = dp[1,0] + 0 = 1 
+
+
+
+01234567
+abcdeeee
+bcdeef
+
+这么写一旦出现两个重复的字符就不对了
+
+
+abc
+a
+
+------------------
+
+2017.12.29
+
+dp[i,j,x,y] 表示从 i,j 到 x,y 的最大矩形面积
+
+dp[i,j,x,y] = max
+{
+    dp[i+a,j+b,x-c,y-d] + [(x-c)-(i+a)+1]*[(y-d)-(j+b)+1]    
+
+    结果最后这个写成了枚举    
+}
+
+
+
+2 1 4 3
+(4-2)+1 = 3
+(3-1)+1 = 3
+
+0 1 5 2
+
+
+1
+2
+3
+...
+26
+
+5 6 4 7 9 8 13 21 8 9 7 12 3 4
+
+13218
+1 3 2 1 8
+1 3 2 18
+1 3 21 8
+13 2 1 8
+13 2 18
+13 21 8
+
+
+123->3
+12 3
+1 23
+1 2 3
+----------------
+
+2018.1.2
+
+新的一年开始了
+
+1 2可以右结合，上面这种情况就是 
+1右结合了，2没有
+1没有结合，2右结合了
+1没有结合，2没有结合
+1，2同时结合不成立
+
+
+813218
+
+1 3
+13   
+21
+2 1
+18
+1 8
+
+218 是三个，不是四个，所以是 2 * 3 = 6
+
+8 1 3 2 1 8
+8 1 3 2 18
+8 1 3 21 8
+
+8 13 2 1 8 
+8 13 2 18
+8 13 21 8
+
+12212->8
+1 2 2 12
+1 2 2 1 2
+1 2 21 2
+12 2 1 2
+12 2 12
+12 21 2
+1 22 1 2
+1 22 12
+
+
+
+1221->5 
+
+1 2 2 1--
+1 2 21
+12 2 1--
+12 21
+1 22 1--
+
+26122->6     2612->4  261->2
+26 1 2 2--
+26 1 22-
+26 12 2--
+
+128
+1 2 8 1
+1 28 1
+12 8 1
+
+12->2
+1 2
+12
+
+1->1
+
+21->2
+2 1
+21
+
+221
+22 1
+2 21
+2 2 1
+
+
+dp[i] = dp[i-1] + dp[i-2]       ((s[i-1] == 1 && (s[i-2] == 1 || s[i-2] == 2) ) || (s[i-1] == 2 && s[i] <= 6 && (s[i-2] == 1 || s[i-2] == 2)) )
+dp[i] = dp[i-1] * 2             ((s[i-1] == 1 && s[i-2] != 1 && s[i-2] != 2 ) || (s[i-1] == 2 && s[i] <= 6 && s[i-2] != 1 && s[i-2] != 2) )
+dp[i] = dp[i-1]                 (s[i-1] != 1 && s[i-1] != 2)
+dp[0] = 1
+dp[1] = dp[0] * 2  (s[0] == 1 || s[0] == 2)
+dp[1] = dp[0]      (s[0] != 1 && s[0] != 2)
+
+
+5 2 6 1 8 
+5 26 1 8 
+5 2 6 18
+5 26 18
+
+
+--------------
+
+显示血条
+
+setCamp
+
+refreshHeadBar 刷新血条
+
+
+-----------------
+
+2018.1.3
+
+playerOther.lua 里面加载血条,先加了再说---
+
+判断pvp等会儿问胡建
+
+------------------------
+
+2018.1.4
+
+pvp 击杀的协议，获取玩家名字，头像，阵营---
+
+sc_role_dead_notify
+
+mName
+mCamp 1 己方是1 ，敌方是2  怪是-1
+
+SKUIImage.SetSpriteName(self.UI_ID, ui.Player.HeadIcon, self.mPlayer:getHeadIcon(), AtlasData.Atlas_Icon_Head);
+
+控制显示时间，想了一下，如果同时有3-4个玩家死亡，还真的需要滑动列表了
+
+
+
+35 
+
+-35
+
+-105
+
+动画逻辑: 
+
+多条的时候：上浮前先检查所有label，然后得出三个label中最新的是哪个，然后给最新的注入数据。
+          同时上浮移动，到达判断边界的回收到原点，
+
+显示逻辑
+
+showLabel( killer, player, label )
+
+sk_uiManager.isOpen()
+
+
+----------------------
+
+2018.1.5
+
+首先需要找到 未激活的，y 坐标最大的，作为最新的label
+
+------------------
+
+2018.1.6
+
+找到玩家，然后 固定取buff绑定点绑 
+
+挂在橘色头顶---
+
+float stayTimeVal
+
+先测一波 ShowPvpPlayerBeat---
+
+-------------------------
+
+2018.1.8
+
+先确认一下需要上传的脚本和资源
+
+SKUIHeadbar
+
+PvpPlayerBeat 
+
+
+理顺这几个 Player 的继承关系，熟悉一下api
+
+
+下午配置一下显示时间，交给策划
+
+
+
+        [NoToLua]
+        public PvpPlayerBeat pvpPlayerBeat;
+
+
+
+
+
+
+_e_World_type
+
+
+sk_worldManager.curWorld == _e_World_type._PvP
+
+--------------------
+
+2018.1.9
+
+enemy_group 加入红边框---
+
+pvp 中自己 显示蓝色阵营标志---
+
+队友显示蓝色阵营标志---
+
+
+理顺这几个 Player 的继承关系，熟悉一下api
+
+playerMain->PlayerLocal->playerBase
+
+
+------------------------------
+
+2018.1.10
+
+高速穿透问题：
+
+Rigidbody 中有三个 Collision Detection
+
+Discrete
+
+Continuous
+
+Continuous Dynamic 
+
+1.如果你有一个快速运动的小球，它会穿过一个静态的墙，那么将球设为Continuous即可解决问题。
+
+2.但如果你有多个这样的小球，它们之间则依旧会遇到互相穿过对方的问题，那么将球都设为Continuous Dynamic更好。
+
+所以遇到题主的问题时，将快速运动的物体设为Continuous/Continuous Dynamic即可。理论上你可以设定所有物体为Continuous Dynamic，
+然而这样的物体数量一旦增加起来，对性能会有很大的影响。
+
+作者：Xylt
+链接：https://www.zhihu.com/question/39177106/answer/80154308
+来源：知乎
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+生成扇形碰撞网格 GenerateFanMesh
+
+
+
+---------------
+
+又接了一个新的活儿，编辑器的小工具
+
+可以参考 combineWorldEditor   
+
+合并 头 头发 身体 这三个prefab 
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Assets._3rdPlugins.Scripts.Editor.Tools
+{
+    public class CharactorCombineEditorWindow : EditorWindow
+    {
+        [MenuItem("工具/美术工具/角色合成工具")]
+
+        public static void ShowCharactorCombineEditorWindow()
+        {
+            var win = GetWindow<CharactorCombineEditorWindow>("角色合成工具");
+            win.Show();
+        }
+
+
+
+        [SerializeField]
+        private UnityEngine.Object body;
+        private UnityEngine.Object face;
+        private UnityEngine.Object hair;
+
+        GUIContent sceneArrayName = new GUIContent("角色的各部分prefab");
+
+    }
+
+    protected void OnEnable()
+    {
+
+    }
+
+    protected void OnGUI()
+    {
+       if (GUILayout.Button("合并"))
+       {
+
+       }     
+    }
+}
+
+// 
+
+
+// body 找到脚本 ModelBindPoints ，然后找到 pointList[9] 就是头部的 Transform
+// 在这个 Transform 之下挂载 face 和 hair
+
+
+
+-----------------
+
+
+2018.1.11
+
+昨天的功能可以用了，然后需要再加两个绑定点，左右手武器
+
+创建角色屏蔽字库,lua 正则表达式
+
+
+等级达到30级以上的装备才可以进行升星操作 1419
+等级达到13级以上才可以进行开封操作  1420
+等级达到30级以上才可以进行升星操作   1421
+等级达到10级以上的装备才可以进行开封操作 1422
+
+
+local s = gameTools.split(_localization(1406), "%s", { name });
+
+
+messageCall
+
+15003
+
+local featureData = gameData.getGameFeatureData(id);
+
+currLv >= featureData.unlockLv
+
+---------------------
+
+2018.1.12
+
+增加敏感词 ---
+
+删除敏感词 ---
+
+效率在PC上跑还OK
+
+------------------
+
+2018.1.13
+
+TrailRenderer 生成网格，做成追踪导弹的拖尾那种感觉
+
+导弹运动轨迹首先是一个限定旋转角度的曲线运动
+以前做过，但是以前那个问题一直没有解决，就是导弹可能绕着敌机一直转
+
+解决方法：转弯角度角度的百分比值随时间逐渐变大，发射后时间越长，转弯角度越大
+
+
+-----
+
+require "game/tools/sensitiveWords"
+
+sensitiveWords.addSensitiveWord(addList);
+sensitiveWords.deleteSensitiveWord(delList);
+sensitiveWords.init_chat_dict();
+
+--------------------------------
+
+2018.1.15
+
+看明白了那个计算矩形最大面积的题目的题解了，
+意思是要动态维护一个下标值，这种思路比较精巧，但是具体的推导步骤其实有点难想。
+
+sk_network.showNetworkWaiting({LuaMessage.ID_sc_team_activity_list}, "", false);
+
+
+    SKUITransform.SetActive(self.UI_ID, ui.areaList.obj, true);
+
+
+------------------------------------
+
+
+2018.1.16
+
+礼品兑换协议 122---
+
+强化装备的红点显示规则：已装备的装备才显示红点---
+
+pvp 复活bug---
+
+A11YPBECMJ吕厚军(吕厚军) 16:47:01
+A11BDJDUPF---
+A11CMZKTO---
+A11GYBNEJR
+A11JIOVQIT
+A11NQJWHGN
+A11PEZNBGL
+A11RZLYGQP
+A11SKJWGUU
+A11WRZWZNE
+A11YPBECMJ
+
+-----------------------------
+
+2018.1.17
+
+铁匠铺烟头                                                                     
+
+map_zc_tiejiangpu01/ch_npc_tj_p/npc_ti_all/Bip001/Bip001 Pelvis/Bip001 Spine/Bip001 Spine1/Bip001 Spine2/Bip001 Neck/Bip001 Head/Bone_up_smoker
+
+-----------------
+
+2018.1.18
+
+今天一直在闲逛，嗯。。。
+
+---------------
+
+2018.1.19
+
+要塞打造界面排序
+
+
+table.sort(self.mSchemeList, function(a, b)
+        if a.productData.limitLevel ~= b.productData.limitLevel then
+           return a.productData.limitLevel < b.productData.limitLevel;
+        else 
+            local _, k1 = table.find(_equip_kinds, function (_value) return _value == a.productData.kind end);
+            local _, k2 = table.find(_equip_kinds, function (_value) return _value == b.productData.kind end);
+            return k1 < k2;
+        end
+    end );
+
+
+-------------------
+
+2018.1.20
+
+StarBiter那个项目分解成几个功能模块
+
+1.地图，关卡生成：
+-陨石
+-背景贴图无限循环
+-敌机
+
+2.激光索敌逻辑
+-激光碰到敌机，加入列表
+-发射导弹
+
+3.飞机相对地图的移动，输入控制等
+
+
+
+今天先写个最简单的：
+ 背景贴图无限循环
+
+ 星星的卷轴速度---
+
+ 
+
+0 -2 0
+10 1 10 
+T06_crosshatch
+
+
+-----------------------
+
+2018.1.22
+
+AI放在哪里，客户端有没有用到多线程。这几个问题需要了解一下
+
+invisibleZone 这个飞机出生时候的防护罩
+
+PlayerControl --- 
+
+
+--------------------------
+
+2018.1.23
+
+看了一下这个游戏，真的有个boss，然而难度很大。
+
+Enemy 分了四种， 03 是leader 
+
+Player 放入场景，然后开始移动。 Player 本身不会移动
+
+
+
+
+sk_network.showNetworkWaiting({LuaMessage.ID_sc_account_enter_game, LuaMessage.ID_sc_account_select_role}, "角色登录中...", true);
+
+
+
+---------------
+
+2018.1.24
+
+ScoutingLaser 
+
+锻造里面的红点:
+
+等级筛选的红点
+
+列表的红点---
+
+
+外面的红点---
+
+打造的动画的进度条 lerp---
+
+
+buildingId = 10201
+
+local nodeObj = SKUITransform.CheckTransform(self.UI_ID, uiItem.obj);
+_redNotice.showNoticeObjManual(41, nodeObj, true);
+
+---------------------
+
+2018.1.25
+
+levelFilter.optionList.obj
+
+
+
+70 16 
+
+
+等级筛选的红点
+
+    for i = 1, #self.mAvailableSchemeList do
+        local scheme = self.mAvailableSchemeList[i];
+        -- 
+        if (needLevel == 0 or scheme.productData.level == needLevel) and ( scheme.data.make_type == needTalent or scheme.data.make_type >= 1000 ) then
+            table.insert(self.mSchemeList, scheme);
+        end
+    end
+
+
+ scheme.data.make_type == _playerData.getRoleTalent()
+
+
+--------------------------
+
+2018.1.26
+
+强化界面的装备列表，很神奇，研究了一下午
+
+
+-------------------------
+
+2018.1.27
+
+今天早上我发现原来是计算一个 refillIndex = maxCount - 5 ;  这里5 是不对的，4才对 --- 
+
+自动选择的装备A进入强化，点了其他的装备B，再点 强化，会切换到之前的A，逻辑不对---
+
+只收集 Lua Exception  只收集第一个---
+
+
+
+"14:31:12.87-374: 此建筑不产出资源\nstack traceback:\n\t[string \"game/core/gameTools\"]:435: in function 'errorLog'\n\t[string \"game/messageCall/208fort/sc_fort_resource_info_msgCall\"]:13: in function 'call'\n\t[string \"game/module/client\"]:58: in function <[string \"game/module/client\"]:47>"
+
+
+
+
+饥饿的多萝西
+
+
+---------------------------
+
+2018.1.28
+
+
+fortBuild
+
+fortRes 
+
+wait
+
+
+------------------------------
+
+2018.1.29
+
+激光扫描的 Laser.cs---
+
+---------------------
+
+2018.1.30
+
+飞机移动（背景板移动）---
+
+星空移动---
+
+星空并没有什么特殊，只是三张图
+
+player发射子弹
+
+
+
+------------------------
+
+
+2018.1.31
+
+player发射子弹  PlayerShot ---
+
+子弹的控制器
+PlayerShotControl ---
+
+
+摆一圈不会动的 Enemy--- 
+
+玩家扫描 Enemy---
+
+然后发射导弹
+
+-------------------------
+
+2018.2.1
+
+LockonSightControl--- 
+
+玩家的状态机
+
+没有洗练数据： 两次洗练请求中间，第一条的数据还没返回，第二条就已经继续洗练了，所以有错
+cs_equip_wash_replace 这个协议应该也做返回结果的判断，应该就可以了
+
+
+-----------------------------
+
+2018.2.2
+
+代码优化： 
+
+1.舰队不产生资源的建筑不发送请求  cs_fort_resource_info---
+
+2.已经完成的建筑，请求报错
+
+7号车42号
+
+function _playerData.onBuildFinishConfirm(data)
+    local buildingId = data.building_id;
+    local building = _playerData.mFortBuildingList[buildingId];
+    building:buildFinishConfirm();
+end
+
+----------------------------
+
+2018.2.5
+
+上周五年会，周六周日休息，现在周一
+
+
+已经完成的建筑，请求报错---
+
+看一下声音的代码，音轨叠加
+
+游戏里同一个声音同时播放，会造成声音很大的那种情况吗？
+
+if (prefs.isSoundEnabled()) {
+    sndExplosion.stop();
+    sndExplosion.play();
+}
+
+
+3D 声音那里有一个设置 
+Doppler Level 多普勒等级，声音离得越近越大，而且频率应该是越高。典型的比如一辆车呼啸而过
+
+Ray Wenderlich
+
+做一个爆炸播放声音的demo，用 Physics 里面的 overlaps 检测爆炸，然后同时播放声音
+
+
+----
+
+PlayerState --- 
+
+EnemyState 
+
+
+-----------------------
+
+2018.2.6
+
+
+EnemyState--- 
+
+子弹击毁敌机---
+
+敌机爆炸的特效 EffectOfBomb--- 
+
+
+----------------
+
+2018.2.7
+
+10.10.17.100
+61.139.2.69
+
+武器战的旋风斩不能原地释放，可能引起的问题：
+前后方都有怪物，想直接旋风斩打到后面的怪物，但是点了旋风斩，需要往前走一段，再释放，
+这段技能延迟比较影响游戏体验。
+这种以玩家自身为中心点释放的的AOE技能，应该是只要有能量就可以释放，不管有没有目标。
+
+EnemyMaker -> EnemyFactory
+
+EnemyStatusType03Leader : EnemyStatus
+
+gameObject.GetInstanceID() 这个 api 比较重要，可以拿到动态创建的游戏物体的id
+
+
+1.强化装备功能
+
+2.舰队内锻造功能
+
+3.舰队内资源站功能
+
+4.舰队内资源采集功能
+
+5.舰队的点击区域优化
+
+6.收集真机的错误
+
+7.战斗力提升功能
+
+8.竞技场击杀信息功能
+
+9.兑换礼品功能
+
+10.美术用到的角色模型合成工具
+
+11.组队界面的查看队友属性功能
+
+12.敏感词检测功能
+
+13.道具获取途径功能
+
+----------------------
+
+2018.2.8
+
+看一下 stage 的实现
+
+希望转正顺利，不行的话只好转去小黄人组。再不行只能换公司了
+
+------------------------
+
+2018.2.9
+
+目前还没审批通过。。。24小时了
+
+假设原网盘网址是http://pan.baidu.com/share/linkshareid=76297&uk=3033397054
+
+只需将蓝色部分替换为home?即https://pan.baidu.com/share/home?uk=3033397054
+
+StageControl 是一个线性的关卡，依靠 Coroutine 实现关卡的递进
+
+应该先写敌机的逻辑 
+
+transform.eulerAngles.y  可以直接拿到旋转角度的欧拉角
+
+Mathf.LerpAngle  这个函数写错成 Mathf.Lerp 效果就完全不一样了，对比了半天。。。
+
+-----------------------------
+
+2018.2.11
+
+原来是我的计算机名和别人的冲突了？
+下次我试试改了计算机名得了。。。
+
+EnemyType01ChildController
+
+已经发现很多重复代码了，可以考虑用继承了
+
+编队如何实现：
+
+将编队整个做成一个 prefab 
+
+
+
+
+
+------------------------------------
+
+SDK 接过
+
+AI用过行为树，做过A*寻路，shader 会写一点点，渲染管线不熟
+
+gamePlay 方面物理用过不少，其他的还得再学一个
+
+dotween 用过
+
+骨骼动画用过
+
+Editor也用过
+
+网络和多线程 同步
+
+系统框架 
+
+多交流  
+
+C#托管堆
+
+
+-------------------------
+
+2018.2.12
+
+调试
+
+speed 3
+    0.5 
+    5
+    8
+
+    发现EnemyState 这里有问题，但是具体哪里有问题还不清楚
+
+-------------------
+
+2018.2.13
+
+每个字段都找最深的，记录深度和长度，然后记录下来，记录成一个模板，然后按照这个模板修改和加长度
+
+----------------------------
+
+2018.2.27
+
+年前飞机的bug终于解决了，原来是初始化的时候状态设定的不对
+
+private State enemyState = State.INITIALIZE;  // 这样才对
+
+
+SKPlatform 封装了各个平台
+SKConfig 一些基本配置
+SKApp 输入，初始化，Update, LateUpdate, 暂停，继续 
+
+SKUI 
+
+
+CLR常用简写词语，CLR是公共语言运行库(Common Language Runtime)和Java虚拟机一样也是一个运行时环境，它负责资源管理（内存分配和垃圾收集等），并保证应用和底层操作系统之间必要的分离。CLR存在两种不同的翻译名称：公共语言运行库和公共语言运行时。
+
+CLR是一个可以由多编程语言使用的运行时，
+
+
+CLR的核心功能：内存管理，程序集加载，安全性，异常处理，线程同步等等。可以被很多属于微软系列的开发语言使用
+
+
+AOT：Ahead Of Time，指在运行前编译，比如普通的静态编译 
+JIT：Just In Time，指在运行时编译，边运行边编译，比如java虚拟机在运行时就用到JIT技术 
+
+
+其实现原理在于使用了叫CIL（Common Intermediate Language 通用中间语言，也叫做MSIL微软中间语言）的一种代码指令集，CIL可以在任何支持CLI（Common Language Infrastructure，通用语言基础结构）的环境中运行，就像.NET是微软对这一标准的实现，Mono则是对CLI的又一实现
+
+从代码本身到CIL的编译（其实之后CIL还会被编译成一种位元码，生成一个CLI assembly）
+运行时从CIL（其实是CLI assembly，不过为了直观理解，不必纠结这种细节）到本地指令的即时编译（这就引出了为何U3D官方没有提供热更新的原因：在iOS平台中Mono无法使用JIT引擎，而是以Full AOT模式运行的，所以此处说的额即时编译不包括IOS）
+
+
+CIL是基于堆栈
+
+-----------------------
+
+2018.2.28
+
+http://www.cnblogs.com/leoo2sk/archive/2009/06/17/di-and-ioc.html#3420045
+
+依赖注入：
+
+OCP原则，即开放关闭原则，指设计应该对扩展开放，对修改关闭。
+
+本质就是把变化的部分和不变的部分隔离开，使得变化部分发生变化时，不变部分不受影响
+
+策略模式，英文名Strategy Pattern，指定义算法族，分别封装起来，让他们之间可以相互替换，此模式使得算法的变化独立于客户
+比如说有三种武器，分别去实现 IAttackStrategy 里面的 AttackTarget 方法
+
+
+luainterface：LuaInterface是开源的C#的lua桥接库，配合开源库luanet，能轻松实现Lua，C#相互调用和参数事件传递。但作者仅完成了windows程序的功能实现，跨平台并没有完成，作者于2013年4月30日停止更新luainterface，并推荐大家关注luainterface的一个分支Nlua。Nlua是实现跨平台的Luainterface的升级版，uLua和NLua都是基于此库升级编写
+
+
+LuaInterface中的核心就是C#通过Pinvoke对Lua C库调用的封装，所以，在Unity中，LuaInterface就是C#与Lua进行交互的接口。
+
+Lua是一种很好的扩展性语言，Lua解释器被设计成一个很容易嵌入到宿主程序的库。LuaInterface则用于实现Lua和CLR的混合编程。
+
+
+LuaInterface.Lua类是CLR访问Lua解释器的主要接口，一个LuaInterface.Lua类对象就代表了一个Lua解释器（或Lua执行环境），Lua解释器可以同时存在多个，并且它们之间是完全相互独立的。
+
+lua编译成 .so  和  .a ?
+
+IL2CPP
+
+
+-------------------------
+
+2018.3.1
+
+需要下载一个Unity 5.4.4f1 然后才能跑 tolua 的 Unity-Hello 
+
+构思一下任务系统怎么实现（虽然目前没有说让我来做，但是可以思考一下）：
+
+
+当前追踪的任务：
+
+任务1：
+    -任务类型：击杀某种怪物（5/10）
+    -任务描述
+
+
+任务2：
+
+任务3：
+
+...
+
+
+需要维护一个玩家自己的任务表， currentCount / needCount
+
+每次击杀成功就 ++currentCount ，直到任务完成
+
+
+
+
+
+1.代码写死的文本，全部移到大表里面。找相关策划
+
+2.TextFormat 加一个 id ，然后
+
+3.SKUI TextFormat  读刚才那个id，然后通过表得到 text 
+
+
+--------------------------------
+
+2018.3.2
+
+text 的 xml 配置文件里面加一条
+
+trunk 和 art 工程里面引用的是同一份脚本，所以改两边的都行
+
+多解析出来一个 table 在后面
+
+foreach(element in ui.labels)
+{textName = 12, localId = }
+
+--------------------------------------
+
+
+2018.3.5
+
+读入 localData ,然后拿到 ui.labels
+
+
+-- ui数据
+ui = 
+{
+    
+}
+
+---
+
+    if localData == nil then
+        --SKLog.LogError("localData 为空，请检查ui数据");
+    else
+        for i = 1, #localData do
+            local textTable = localData[i];
+            if textTable == nil then
+            --    SKLog.LogError("textTable 为空，请检查ui数据");
+            else
+                   textTable.textId;
+                   textTable.localId;
+                   SKUIText.SetText(self.UI_ID, textId, _localization(localId));
+            end
+         end
+    end
+
+--------------------------------------------
+
+2018.3.6
+
+
+首先这个 Language_cn 是需要策划和程序共同维护的，每个UI prefab 也是程序自己来维护，xml 配置文件也是，
+所以就免不了人工去写配置文件
+
+
+Equipment 这个界面，我先自己完成
+
+1.剥离所有需要的静态文字
+
+强化 
+开封
+升星
+
+已开封 equip_list/Pool/1 (1)/open
+强化属性提升 upgrade_info/next
+
+
+---------------------------
+
+2018.3.7
+
+1.剥离所有需要的静态文字
+
+强化 
+开封
+升星
+
+已开封 equip_list/Pool/1 (1)/open
+强化属性提升 upgrade_info/next
+
+强化等级不能超过角色等级 upgrade_info/max
+
+消耗 upgrade_info/resTitle
+强  化 upgrade_info/upgrade_equip/Text
+成功率：star_info/rate
+
+消耗 star_info/resTitle
+升  星 star_info/star_equip/Text
+
+消耗 refine_info/release_res/title
+开  封 refine_info/release_equip/Text
+保  存 refine_info/replace_equip/Text
+洗  练 refine_info/refine_equip/Text
+
+
+强化--
+开封--
+升星--
+强  化-
+开  封-
+升  星-
+洗  练-
+保  存-
+已开封-
+消耗---
+强化属性提升-
+成功率：-
+
+
+data 整理出来
+
+规则：只用 ID，不填具体文字
+
+----------------------------------------------
+
+2018.3.8
+
+data 表一共有151个，我整理前 80 个---
+
+VS Code 中文注释显示乱码怎么办？
+将设置中的"files.autoGuessEncoding"项的值改为true即可。
+
+
+
+
+
+
+
+
+
+消耗 info/consume
+打  造 info/make_equip/text
+恭喜获得 result/Frame (1)/Title
+打造中... progress/Text
+
+
+颜色缓存 每个像素点颜色
+
+深度缓存 每个像素点Z值
+
+模版缓存 用于记录所呈现图元位置的离屏缓存
+
+双缓存技术
+
+
+可见性问题通过Z缓存算法解决
+
+alpha测试
+
+模版测试
+
+
+--------------------------------
+
+2018.3.9
+
+今天把铁匠铺和强化的UI本地化工作先搞了再说-
+
+访问梯度信息是像素着色器独有的能力，是其他着色器所不具备的
+
+融合阶段是个体片段的深度和颜色（在像素着色器中生成）与帧缓存结合。这个阶段发生模板缓存与深度缓存运算。在这个阶段发生的另一个操作是颜色的混合，通常用于透明和影像合成
+
+
+融合阶段处于固定功能阶段，例如裁剪，和完全可编程的着色器阶段之间一个非常有趣的中间点。虽然它不是可编程的，但他的操作是高度可配置的。尤其是颜色混合可以运行大量不同的操作。最普遍的是乘法，加法和减法的结合，并涉及颜色值和α值，但其他操作也是可能的，例如最小和最大值，以及位的逻辑运算
+
+
+对于三元向量来说，缩放和旋转都是线性变换
+
+平移不是线性变换
+
+仿射矩阵的主要特点是它保持了直线间的平行关系，但不一定保持其长度和角度
+
+一个仿射变换也可以多个个体仿射变换的任意次序的连接
+
+---------------------------------------------
+
+2018.3.12
+
+今天把铁匠铺和强化的UI本地化工作先搞了再说-
+
+262345
+556781
+570779
+723353
+714885
+776841
+271991
+187011
+161127
+481846
+
+
+今天突然想起 RUDP ，云风实现了一个，Reliable UDP
+Blog里面提到
+MTU 最大传输单元（Maximum Transmission Unit，MTU）是指一种通信协议的某一层上面所能通过的最大数据包大小（以字节为单位）
+
+“在国内最好udp包大小最好不超过576，我们踩过坑（国内一些设备制造商没有严格遵循rfc标准），576最安全，fps,moba,球，车类的上行包大多数不超过100字节，下行不超过300，所以大多数情形下不会因为分包造成有效payload减少”
+
+
+gameUI.Init(UIEquipment, ui._localData);
+
+
+烘焙真的念 hong bei 
+
+
+BRDF
+双向反射分布函数（Bidirectional Reflectance Distribution Function，BRDF）
+
+SSAO全称“Screen-Space Ambient Occlusion” （屏幕空间环境光遮蔽）
+
+
+本周目标：
+跑通主城 pvp副本 战斗
+
+----------
+
+开始写软渲染
+
+-----------------------
+
+2018.3.13
+
+跑通昨天的软渲染的demo，远不止300行，但是值得一写---
+
+Scripts/
+SRInspector.cs --- 挂在游戏物体上的脚本，用来存 导出渲染图的路径，文件名的
+
+Editor/
+SRPannel.cs -
+SRTexture.cs --- 渲染图的存取，构造.  
+
+
+顶点缓冲对象（Vertex Buffer Objects，VBO）
+
+顶点数组对象（Vertex Arrary Object，VAO）
+
+索引缓冲对象（Element Buffer Object，EBO）
+
+
+----------------------------
+
+2018.3.14
+
+SRShaders.cs ---
+
+SRMain.cs- 软渲染的主程序
+
+---------------------
+
+2018.3.15
+
+SRRaster.cs ---
+
+
+C# CLR 虚拟机 
+
+linux  mono 
+
+PBS（Physically Based Shading）在有一些地方也叫PBR（Physically Based Rendering），是一个基于物体表面材质属性的着色方法。
+与之前的Blinn-Phong等算法不同。PBS通过对物体表面的材质属性与周围光照信息来进行着色计算。
+PBS着色系统中，一个物体不仅受到光源的影响，还会受到周围环境的影响。 这会使得整个场景更加真实。
+
+
+传统的贴图渲染技术，一般是使用3张贴图来表现模型的效果：
+
+漫反射贴图、法线贴图 和 高光贴图。
+
+物体能让肉眼看到的基本颜色，都是通过漫反射贴图来表现的，然后通过法线贴图让模型在细节上产生有凹凸的感觉。最后通过高光贴图控制模型不同部分的高光显示不一样，让人感觉到同一个模型上有不同的质感。由于光照模型产生高光的锐度不一样，还需要通过一个参数去调节高光的整体锐度。
+
+
+Albedo： 这就是物体表面的基本颜色，在物理模型中相当于物体表面某处各子表面的散射颜色   ---- 漫反射贴图 
+
+Metallic ： 这相当于物理模型中的F(0)，即物体表面和视线一致的面的对光线反射的能量，通常金属物体通常超过50%，大部分在90%，
+而非金属集中在20%以下，自然界中的物质很少有在20%-40%之间的（除非一些人造物体），正因为如此这个属性被形象的称谓metallic（金属感）
+
+Smoonthness：这相当于物理模型中与实现一致的面占所有微面的比例，比例越大，物体越光滑，反之越毛糙，一定要区分这个和mettalic（metallic在描述对反射能量的强弱，smmothness描述表面的光滑程度），当然大所属情况下金属的smoothness都很高。
+
+normal map：法线贴图
+
+height map: 视差贴图，用于在法线贴图的基础上表现高低信息（法线只能表现光照强弱，而视察贴图可以增加物理上的位置的前后）
+Heightmap 直接对某些顶点进行位移。由此也可以看出来，Heightmap的效率开销会比Normalmap高，要更据情况选择使用。
+
+Occlution：遮挡占据贴图,用于模拟GI，物体在默写凹槽处由于受到光线的减少而显得暗，也就是自遮挡
+
+
+Emission：自发光，不过UNITY5的自发光可以在全局光照中当光源使用，非常好
+
+secondary maps：第二道贴图
+
+Detail Mask：对第二道贴图的mask
+
+unity5还提供了一个Standard (Specular setup)，主要区别在于，这个shader提供了一个和albedo不同的specular的颜色，也就是漫反射和高光反射的颜色分开
+
+
+静态物体 mesh 合并
+
+LOD
+-----------------------------------
+
+2018.3.16
+
+SRMain.cs ---
+
+去弄一下自动化打包和自动化导出AB
+
+控制台调用unity函数不需要打开 Unity3D
+
+
+弄了半天连安卓 SDK 都没装
+
+
+打包工具打PC包已经可以了
+
+
+Vector2 a = new Vec2(Vec3)
+
+
+setDirty
+
+add 
+min
+mul
+
+12 +1 -2 
+stack
+pop
+
+
+----------------------------------
+
+2018.3.17
+
+自动打包的参数有点多，翻译一下分个类
+
+-batchmode                  在批处理模式下运行 Unity
+
+-createProject <pathname>   在指定路径创建空工程 
+
+-projectPath <pathname>     在指定路径打开工程
+
+-logFile <pathname>         指定写入编辑器或 Windows 独立版日志文件的位置
+
+-assetServerUpdate <IP[:port] projectName username password [r <revision>]>
+在 IP:port 部分给出的资源服务器 (Asset Server) 中强制执行工程更新。端口为可选，若未指定，则假设为标准端口 (10733)。建议将此命令与 -projectPath 参数配合使用，以确保更新正确的工程。如果未给出工程名称，那么将使用 Unity 上次打开的工程。如果 -projectPath 指定的路径不存在工程，那么将自动创建此工程。
+
+-exportPackage <exportAssetPath1 exportAssetPath2 ExportAssetPath3 exportFileName>
+根据给定路径（或给定路径集合）导出资源包。exportAssetPath 是从 Unity 工程中导出的文件夹（相对 Unity 工程的根目录），exportFileName 是指资源包的名称。目前，此选项仅能导出整个文件夹。此参数通常需要与 -projectPath 参数同时使用。
+
+-executeMethod <ClassName.MethodName>
+在启动 Unity 之后、打开工程之后以及执行可选资源服务器更新之后，立即执行静态类函数。此参数可用来不断整合、执行单元测试、完成构建、准备数据等等。如果希望从命令行 (commandline) 返回错误，那么可以抛出一个异常，引起 Unity 以 1 值退出，或调用具有非零代码的 EditorApplication.Exit。若想要传递参数，可以将其添加至命令行，并使用 System.Environment.GetCommandLineArgs 在类函数内检索。
+
+
+
+3D游戏大师编程技巧
+
+
+-----------------------------------
+
+2018.3.19
+
+
+
+
+SKAssetBundlePanel abp = EditorWindow.GetWindow<SKAssetBundlePanel>("AB管理器", true);
+        abp.LoadConfig("Assets/ScriptsABNameConfig.asset");
+        string destPath = SKFrameworkSetting.projectDataDir + "/Assets/" + SKFrameworkSetting.getBuildTargetName() + "/Scripts";
+        abp.ExportToDir(false, false, destPath);
+        abp.Close();
+
+
+
+
+
+public static void BuildAndroid()
+    {
+        string path = "Sample.exe";
+        ArrayList levels = new ArrayList();
+        BuildTarget target = BuildTarget.StandaloneWindows;
+        BuildOptions options = BuildOptions.None;
+
+        if (path.Length != 0)
+        {
+            foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
+            {
+                if (!scene.enabled) continue;
+                levels.Add(scene.path);
+
+                Debug.Log("加载场景  " + scene.path);
+            }
+
+            float time = Time.realtimeSinceStartup;
+            AssetDatabase.Refresh();
+            try
+            {
+                BuildPipeline.BuildPlayer((string[])levels.ToArray(), path, target, options);
+            }
+            catch (System.Exception m)
+            {
+                Debug.LogError(m.Message);
+            }
+            time = Time.realtimeSinceStartup - time;
+            Debug.Log("打包完成，共计耗时" + time);
+        }
+    }
+
+
+---------------------------
+
+2018.3.20
+
+脚本传参，设置 Unity 打包的参数
+
+比如传路径
+
+\\10.10.80.249\研发美术\新资料\美术研发\PX工作提交\参考游戏与视频\20180313\无尽神域
+
+set UNITYPATH="C:\Program Files (x86)\Unity\Editor\Unity.exe"
+set PROJECTPATH="E:\project\project\client\trunk"
+set arg0 = "Sample.exe"
+%UNITYPATH% -projectPath %PROJECTPATH% -executeMethod CommandBuild.BuildAndroid 
+
+
+Unity.exe -quit -batchmode -executeMethod CommandBuild.BuildAndroid -logFile C:\Users\maoshanhui\Desktop\UnityLog.txt
+
+
+-------------------------------------------
+
+2018.3.21
+
+配置 Android 环境---
+
+JDK---
+SDK---
+
+
+it looks like another unity instance is running with this project open
+
+-------------------------
+
+
+2018.3.22
+
+3D游戏编程大师技巧，这书真牛逼
+
+旋转矩阵---
+
+计算直线和平面交点---
+
+不和lua交互不需要把 cs wrap 
+
+大多数情况下不需要求3d 两条直线求交。一般是求平面和直线是否相交
+
+
+讨论四元数居然还和复数有关： 四元数就是超复数
+
+---------------------
+
+2018.3.23
+
+突然想起，四元数是 Quaternion , Unity 经常用的，用于旋转，相机这些
+
+T3DLIB1 T3DLIB4 全部实现                    
+
+local to world 物体局部坐标，平移的话不需要改变，旋转和缩放改变了原物体的局部坐标
+
+空间变换
+
+包围球测试：物体用一个球（找出哪个顶点离物体中心最远）包起来，测试球心在不在视野范围内
+
+背面消除：计算每个多边形的面法线 ns 然后根据观察向量来对面法线测试。
+ns . v > 0 可见 夹角小于90 
+
+
+----------------------------------
+
+2018.3.24 
+
+动手写一些数学库，简单的，能自己编译的
+
+向量和点---
+
+参数化直线---
+
+平面---
+
+矩阵---
+
+//----------------------------------------
+
+MurphyRender 按照书中所写，一步步做好，稳扎稳打
+
+
+-------------------
+
+好日子到此为止
+
+window_bag     加一个按钮，作为测试接口---
+
+window_bag_smelt 熔炼窗口作为 subUI 显示出来 ---
+
+-------------------------------------
+
+2018.3.26
+
+Spine 导入插件
+DragonBone 导入插件
+Dotween 插件
+
+-----------------------------
+
+2018.3.27
+
+------------------------------------------------------------------------------------  UI 模板
+require "game/playerData/playerData"
+
+local sk_eventManager = sk_eventManager;
+local playerData = _playerData;
+local gameUI = gameUI;
+local SKUIText = SKFramework.SKUIText;
+local sk_uiManager = sk_uiManager;
+
+local SKUIText = SKFramework.SKUIText;
+local SKUIImage = SKFramework.SKUIImage;
+local SKUIImageSwitcher = SKFramework.SKUIImageSwitcher;
+local SKUIToggle = SKFramework.SKUIToggle;
+local SKUITransform = SKFramework.SKUITransform;
+local SKUILoopScrollRect = SKFramework.SKUILoopScrollRect;
+local SKUI = SKFramework.SKUI;
+
+
+
+-- ui数据
+local ui = require "game/ui/nameCfg/uicfg_window_bag_smelt"
+
+local UIBagSmelt = { };
+gameUI.Init(UIBagSmelt);
+
+function UIBagSmelt:onDestroy()
+    self.mFashionUI = nil;
+
+    gameTools.removeAllListener(self);
+end
+
+function UIBagSmelt:awake(initData)
+
+
+    -- 背包监听
+    gameTools.addListener(self, _EventType.Event_Role_Show_Change, "", self.changePlayerModel, self);
+
+    gameTools.showCurrencyBanner(gameUI.Bag);
+
+end
+
+-- 注册至Game容器
+return UIBagSmelt;
+
+-----------------------------------------------------------------------------------------------------
+
+data_item  kind == 130   
+
+
+1.筛选图纸，排序 显示出来
+    - 拿到数据---
+    - 拿到 ui scroll list 元件---
+    - 填充数据---
+
+2.选中物品，拿到对应物品id，取得物品数量--
+
+3.熔炼
+
+4.显示魔晶数量
+
+5.点击推荐，能选中很多个物品
+
+6.
+
+
+分解表 
+
+--------------------------------------
+
+2018.3.28
+
+按qulity 和 id 排了一下序---
+
+自己做个data表，然后对应上部位和图纸
+
+推荐的时候，选中 qulity * 5 < 身上的装备等级的图纸
+
+熔炼---
+
+服务器的回调---
+
+---------------------------------------------
+
+2018.3.29
+
+1.计算熔炼结果预览 
+    -需要配置表---
+
+2.显示魔晶数量---
+
+3.数量增减的按钮逻辑
+
+
+背包的UI---
+
+当前无可熔炼的物品
+
+
+--------------------------------------------------
+
+2018.3.30
+
+上传 熔炼---
+
+背包解锁功能去掉
+
+背包有无限个格子  每页30个物品，只需设置最大
+
+熔炼的icon修复一下
+
+--[1] = 301, -- 武器
+--[2] = 302, -- 上衣
+--[3] = 303, -- 下装
+--[4] = 304, -- 鞋子
+--[5] = 306, -- 头盔
+--[6] = 307, -- 肩甲
+--[7] = 305, -- 护手
+--[8] = 308, -- 项链
+--[9] = 309, -- 耳环
+--[10] = 310, -- 戒指
+
+
+
+----------------------------------
+
+2018.3.31
+
+背包的格子数目---
+
+overload  同一个函数的多个不同参数列表实现
+
+override 子类重写父类的方法
+
+
+-------------------------------------
+
+2018.4.2
+
+强化这个系统基本上是重做了，对接了案子---
+
+window_forge 
+
+Progression 这个进度条用 SKUIImage.SetFillAmount 这个实现
+
+
+
+---------------------------------------------
+
+2018.4.3
+
+锻造界面的整体代码框架
+
+uiForge 
+
+
+OnButton_item(transIndex, dataIndex)
+
+-----------------------------------------------------
+
+2018.4.4
+
+UI的大体框架
+
+---------------------------------------------
+
+2018.4.8
+
+拼UI
+
+强化界面的UI---
+
+----------------------------------------------------
+
+2018.4.9
+
+获得当前装备，放入左侧装备栏，显示出来---
+
+
+--[1] = 301, -- 武器
+--[2] = 302, -- 上衣
+--[3] = 303, -- 下装
+--[4] = 304, -- 鞋子
+--[5] = 306, -- 头盔
+--[6] = 307, -- 肩甲
+--[7] = 305, -- 护手
+--[8] = 308, -- 项链
+--[9] = 309, -- 耳环
+--[10] = 310, -- 戒指 
+
+
+武器 上衣 下装 鞋子 护手 头盔  肩甲 项链 耳环 戒指
+
+全身装备强化达到%s
+强化属性加成
+全身装备精炼达到%s
+精炼属性加成
+全身装备星级达到%s
+升星属性加成
+全身附魔等级达到%s
+附魔等级加成
+
+装备名 装备名颜色---
+
+2018-04-09工作情况：
+1.装备养成的左侧代码逻辑
+2.数据表，服务器联调。总完成度30%
+
+
+%% 强化基础属性表
+% -record(data_equip_rank_attr, {
+%       kind                            %%装备类型
+%       ,attr_list                      %%基础属性列表
+%   }).
+
+
+%% 强化等级基础属性
+{data_equip_rank_attr, rank_level_attr, [{7, 10}]}. 
+
+{data_equip_rank_attr, 301, [{7, 100}]}.
+{data_equip_rank_attr, 302, [{7, 200}]}.
+{data_equip_rank_attr, 303, [{7, 300}]}.
+{data_equip_rank_attr, 304, [{7, 400}]}.
+{data_equip_rank_attr, 305, [{7, 500}]}.
+{data_equip_rank_attr, 306, [{7, 600}]}.
+{data_equip_rank_attr, 307, [{7, 700}]}.
+{data_equip_rank_attr, 308, [{7, 800}]}.
+{data_equip_rank_attr, 309, [{7, 900}]}.
+{data_equip_rank_attr, 310, [{7, 1000}]}.
+
+
+---------------------------------------------------
+
+2018.4.10
+
+切换右边的页面---
+
+选中装备---
+
+当前装备显示于右侧页面---
+
+切换装备：刷新右侧的装备---
+
+
+显示战力值---
+
+显示当前装备的强化前后等级---
+
+
+---------------------------------------------------------
+
+2018.4.11
+
+强化属性配置--
+
+_data_equip_rank_attr =
+{
+  [1] = { rank_level_attr = 10, attrList = { {7, 10} } },  
+  [301] = { equip_kind = 301, attrList = { {7, 100} , {7, 100},  } },
+  [302] = { equip_kind = 302, attrList = { {7, 200} } },
+  [303] = { equip_kind = 303, attrList = { {7, 300} } },
+  [304] = { equip_kind = 304, attrList = { {7, 400} } },
+  [305] = { equip_kind = 305, attrList = { {7, 500} } },
+  [306] = { equip_kind = 306, attrList = { {7, 600} } },
+  [307] = { equip_kind = 307, attrList = { {7, 700} } },
+  [308] = { equip_kind = 308, attrList = { {7, 800} } },
+  [309] = { equip_kind = 309, attrList = { {7, 900} } },
+  [310] = { equip_kind = 310, attrList = { {7, 1000} } },
+}
+
+
+-- 获得装备强化属性数据
+function gameData.getEquipRankAttrData(kind)
+    require "game/data/data_equip_rank_attr"
+    
+    local data = _data_equip_rank_attr[kind];
+    if data == nil then
+        gameTools.errorLog("没有找到装备强化数据 kind =  " .. kind );
+    end
+    return data;
+end
+
+-- 获得装备强化共鸣属性数据
+function gameData.getEquipRankAttrResonanceData()
+    require "game/data/data_equip_rank_attr"
+    
+    local data = _data_equip_rank_attr[1];
+    if data == nil then
+        gameTools.errorLog("没有找到装备强化共鸣数据 ");
+    end
+    return data;
+end
+
+
+%% @doc 强化属性值=基础值*强化等级*品阶(等级)^0.9
+%% @doc 强化共鸣属性值=共鸣基础值*(强化等级+强化等级^2*0.1)/(1+1^2*0.1)
+
+
+消耗资源的图标，数量
+
+--------------------------------------------
+
+2018.4.12
+
+强化 精炼 升星 不能增加新的属性
+洗炼 镶嵌 附魔 可以增加新的属性
+
+
+1.能承受较大的工作压力——加班
+
+2.抗压能力强——加班+替别人扛雷
+
+3.工作有激情——自觉加班还要特美
+
+4.有强烈责任心——没做完不准走
+
+5.弹性工作制——加班不给加班费
+
+6.弹性工作制，但不保证准时下班——做完了才准走
+
+7.包三餐——早晚都得加班
+
+8.双休——工作日加班
+
+9.薪资+社保+带薪休假+职位晋升——是个正经公司都有，没什么拿得出手的福利
+
+10.适应较快的工作节奏——加班把三天的工作两天做完
+
+11.公司提供水果——貌似也就这一个福利
+
+12.有强烈的上进心——干完工作就加班去干其他工作
+
+13.喜欢有挑战性的工作——加班、前人留的坑不少
+
+14.不提倡加班——你懂的（该加还得加，加班是因为你工作效率低，不是安排工作多）
+
+15.不强制加班——你懂的 （不做完额外安排的工作你走一个试试！）
+
+16.上不封顶——下不保底
+
+17.偶尔会忙——以后忙了你别抱怨，提醒过了
+
+18.团队氛围很好——大家经常一起加班，一起吃加班餐，聊聊工作，多happy
+
+19.上升空间大——工资低，3000元涨个50%不也就4500吗？
+
+20.领导安排的其它任务——我叫你干啥你就得干啥
+
+21.妹子多——这个屌丝虽然脑子不太好使但便宜，看看这个理由能不能骗一蛤
+
+22.有期权——没多余的现金发工资给你
+
+23.有股权——工资微妙地低于你应得的数，反正我不信你能干满拿走
+
+24.年底双薪——13 薪
+
+25.13 薪起——别想了，就是13 薪
+
+26.年底有奖金——年薪大于 12 薪小于 13 薪
+
+27.我们 6 点准时下班 -——入职才知道最严重的早晨 6 点下班，回家吃早饭睡觉。
+
+28.扁平化管理 -——领导和你坐一屋，盯着你干活
+
+29.核心团队来自 bat ——嗯，你不是bat的，所以你不是核心
+
+30."我把你的简历整理一下"——对方说这个的话基本可以判断他是卖人头外派的了,把你的简历给他的甲方.
+
+31.弹性工作时间——只弹下班，不弹上班
+
+32.能独立完成任务 ——产品测试推广运营全都你一个人干
+
+33.配发笔记本——晚上回家也别想闲着
+
+34.欧美创业环境——比798破一万倍的大厂房
+
+35.管吃管住——除了工作就是宿舍，宿舍就在公司的另外一个角落
+
+36.妹子多——有些屌丝虽然脑子不太好使但便宜，看看这个理由能不能骗一蛤 
+
+37.周末双休——没有周末哪来双休？
+-------------------------------------------------------------
+
+
+2018.4.13
+
+拼UI
+
+xml
+
+1个左侧主页面
+6 个右侧界面  属性对比弹窗  详情页面
+镶嵌界面（林子豪做了，可以公用）  宝石加成预览
+一键附魔  附魔提示
+
+
+--战斗力
+    for _, soul in pairs(soulList) do
+        local power = soul:getPower();
+        totalPower = totalPower + power;
+
+        local attrs = soul:getCurAttrList();
+        for _, prop in pairs(attrs) do
+            if attrList[prop.propType] == nil then
+                attrList[prop.propType] = 0;
+            end
+            attrList[prop.propType] = attrList[prop.propType] + prop.value;
+        end
+
+        local skills = soul:getCurSkillList();
+        for _, skill in pairs(skills) do
+            totalSkillCount=totalSkillCount+1;
+            if skill.unlock then
+                activeSkillCount=activeSkillCount+1;
+                table.insert(skillList, skill);
+            end
+        end
+    end
+    gameTools.ShowNumberSpriteName(totalPower, self.UI_ID, ui.powerList);
+    if totalPower == 0 then
+        SKUITransform.SetActive(self.UI_ID, ui.haveInfoNode,true);
+        SKUITransform.SetActive(self.UI_ID, ui.haveNoNode,false);
+    else
+        SKUITransform.SetActive(self.UI_ID, ui.haveInfoNode,false);
+        SKUITransform.SetActive(self.UI_ID, ui.haveNoNode,true);
+    end
+
+
+
+-------------------------------------------------------------
+
+2018.4.14
+
+强化属性表的配置
+
+"("..equip.mRank.."/"..minLevel..")"
+
+----------------------------------------------------------------
+
+2018.4.16
+
+精炼属性表
+
+精炼需要三个道具消耗： 金币  精炼石  图纸
+
+-----------------------------
+
+2018.4.17
+
+体检
+
+精炼UI---
+
+--------------------
+2018.4.18
+
+
+挡位配置表
+
+data_equip_etc
+
+%%装备通用配置
+
+%%附魔锁定消耗
+{enchant_lock_cost, [{item, 71001, 20}]}.
+
+%%强化共鸣等级列表
+{rank_resonance_level, [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]}.
+
+
+----------------------------
+
+2018.4.19-4.20
+
+            data.current = _data_equip_jinglian_extra_attr[i];
+            data.next = _data_equip_jinglian_extra_attr[i+1];
+
+_richTextColor.quality[data.quality] .. equip.mName .. _richTextColor.endcolor
+
+
+
+_data_equip_star = 
+{
+[1] = { keyList = {seat = 10, level = 1, star = 1} , resList = { {41001, 0} }, succ_ratio = 0, attr_list = {{}}, fail_point = 10, max_point = 30 },
+[]
+}
+
+---------------------------------------
+
+2018.4.21
+
+升星---
+
+--------------------------------------
+
+2018.4.23
+
+洗炼UI---
+
+-----------------------------------------
+
+2018.4.24
+
+limit 数据---
+
+属性字段---
+
+%%装备通用配置
+
+%%附魔锁定消耗
+{enchant_lock_cost, [{item, 71001, 20}]}.
+
+%%强化共鸣等级列表
+{rank_resonance_level, [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]}.
+
+
+------------------------------------------
+
+2018.4.25
+
+
+战力值计算：
+
+找到加成的对应属性 ，求和
+
+
+一键强化，精炼 ，一键消耗所有材料
+
+一键升星：一次最多升一星，连带失败也计算进来。
+
+-----------------------------------------------------
+
+2018.4.26
+
+--[[
+list的结构 
+    {
+        {"标题1",{"属性1","属性2","属性3"...}},
+        {"标题2",{"属性1","属性2","属性3"...}},
+         ...
+    }
+]]
+
+
+seatAttrList
+
+EBA831
+
+
+洗炼的左侧进度条
+
+--------------------------------------------------------
+
+2018.4.27
+
+
+attrList
+
+
+三个弹窗都注册进来，脚本都写一下---
+
+
+window_forge_enchanting_hint---
+window_forge_enchanting_auto---
+window_forge_enchanting_upgrade---
+
+-----------------------------------------
+
+2018.4.28
+
+
+
+    ForgeEnchantingUpgrade = 2508,
+    ForgeEnchantingHint = 2509,
+    ForgeEnchantingAuto = 2510,
+
+
+附魔强化
+
+------------------------------------------
+
+2018.5.2
+
+
+替换附魔（附魔提示）
+
+右边的属性---
+
+----------------------------------
+
+2018.5.3
+
+替换附魔---(还差两个按钮以及消耗的显示)
+
+
+属性对比页面
+
+公会系统：
+
+公会列表
+
+创建公会页面
+
+公会小弹窗3个（系统提示）
+
+公会主界面
+
+申请列表
+
+
+-----------------------------------------------
+2018.5.4
+
+检测是否正在自动附魔，用
+
+message sc_bag_list[id=10654]{
+    repeated    p_goods_info            goods_list      = 1;    
+    required    int32                   grid_num        = 2; //背包格子数量
+    required    int32                   max_grid        = 3; //最大背包格子数量
+    repeated    p_k_v                   use_list        = 4; //快捷使用放物品列表
+    repeated    p_enchant_auto          auto_enchant    = 5; //自动附魔信息(最多一条)
+}
+
+第五条来检查。
+
+要先取消掉正在附魔的，才可以重新开始
+
+
+---------------------------------------
+
+2018.5.5
+
+多选框折腾了半天，最后阿汤哥指点迷津，用button 来实现，就可以了。
+因为toggle遇到了递归的问题，SetIsOn 会触发 OnToggle
+
+
+------------------------------------
+
+2018.5.7
+
+公会的 xml ，主体窗口弹出
+
+
+<Image name="" path=""/>
+
+<Text name="" path =""/>
+
+-----------------------------
+
+2018.5.8
+
+创建公会
+
+公会列表
+
+----------------------------------
+
+2018.5.9
+
+    if _playerData.getFamilyName() == nil  then        
+        sk_uiManager.open( gameUI.FamilyList);            
+    else
+        local name = _playerData.getFamilyName();
+        
+        if string.len(name) == 0 then 
+            sk_uiManager.open( gameUI.FamilyList);                    
+        else 
+            sk_uiManager.open(gameUI.Family);            
+        end
+
+        --gameTools.errorLog(_playerData.getFamilyName());    
+           
+    end
+
+
+strArr = Replace(strArr, ",{}", "")
+
+
+(正式)X_Equip_新增强化属性配置 .xlsm
+
+Public Function ReplaceStr(strArr) As String
+    strArr = Replace(strArr, ",{item,}", "")
+    strArr = Replace(strArr, ",{}", "")
+    strArr = Replace(strArr, ",}", "}")
+    strArr = Replace(strArr, ",,", ",")
+    strArr = Replace(strArr, ",]", "]")
+    strArr = Replace(strArr, "{},", "{}")
+    ReplaceStr = strArr
+End Function
+
+
+
+
+强化改逻辑
+
+seat profession rank
+
+--------------------------------------------
+
+2018.5.10
+
+申请公会---
+
+申请列表---
+
+同意申请---
+
+公会主页---
+
+退出功能
+
+踢人
+
+
+
+101000002 道具显示不了
+
+
+---------------------
+
+2018.5.11
+
+各种改bug
+
+
+----------------------------
+
+2018.5.12
+
+sk_eventManager.postEvent(_EventType.Event_
+
+gameTools.errorLog("无此物品");
+
+
+-------------------------------
+
+2018.5.14
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+试用期完成任务，熟悉lua，熟悉手头的模块---
+
+前端小组合格--
+
+熟悉SKUI这个框架结构，究竟如何从 Prefab 和 xml 关联，然后在 lua 脚本里引用的
+
+知识点拓展，广度，深度。
+代码量
+代码质量
+大局观 平静中获得力量
+
